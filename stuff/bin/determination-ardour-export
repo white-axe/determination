@@ -46,7 +46,7 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 if [[ -z "$input" ]]; then usage; exit 1; fi
-if [[ ! "$input" =~ .*\\.ardour ]]; then >&2 echo 'Error: Input file extension must be .ardour'; exit 1; fi
+if [[ ! "$input" =~ .*\.ardour ]]; then >&2 echo 'Error: Input file extension must be .ardour'; exit 1; fi
 project="$(dirname "$input")"
 session="$(basename "$input" .ardour)"
 
