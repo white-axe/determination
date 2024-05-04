@@ -28,10 +28,7 @@ jobs:
     - name: Install Nix
       uses: cachix/install-nix-action@v26
     - name: Log in to ghcr.io
-      run: |
-        sudo apt update
-        sudo apt install -y skopeo
-        skopeo login -u ${{ github.actor }} -p ${{ github.token }} ghcr.io
+      run: skopeo login -u ${{ github.actor }} -p ${{ github.token }} ghcr.io
     - name: Build
       run: |
         nix build -L
@@ -59,12 +56,12 @@ jobs:
         fi
         while [[ $tag != $old ]]; do
           echo Tag $tag
-          skopeo copy --preserve-digests docker-archive:docker-image-determination.tar.gz docker://ghcr.io/${{ github.repository }}:$tag
+          skopeo copy docker-archive:docker-image-determination.tar.gz docker://ghcr.io/${{ github.repository }}:$tag
           old=$tag
           tag=${tag%.*}
         done
         echo Tag latest
-        skopeo copy --preserve-digests --digestfile digest docker-archive:docker-image-determination.tar.gz docker://ghcr.io/${{ github.repository }}:latest
+        skopeo copy --digestfile digest docker-archive:docker-image-determination.tar.gz docker://ghcr.io/${{ github.repository }}:latest
         cat digest
         echo "digest=$(cat digest)" >> $GITHUB_OUTPUT
     - name: Attest ghcr.io image
