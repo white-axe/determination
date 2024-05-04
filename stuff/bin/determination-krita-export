@@ -1,0 +1,59 @@
+#!/bin/bash
+# Determination - Deterministic rendering environment for music and art
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3.
+
+set -e
+
+help () {
+  >&2 echo ''
+  >&2 echo 'determination-krita-export: export a Krita project deterministically as a PNG file'
+  usage
+}
+
+usage() {
+  >&2 echo ''
+  >&2 echo 'Usage: determination-krita-export -i path [options]'
+  >&2 echo '    path        Path to the .kra or .krz file to export, including the file extension'
+  >&2 echo 'Options:'
+  >&2 echo '    -o path     Directory where the PNG file should be exported'
+  >&2 echo '                (default: ./export relative to the input file)'
+  >&2 echo '    -m name     Filename of the exported PNG file without extension'
+  >&2 echo '                (default: master)'
+  >&2 echo ''
+}
+
+input=''
+output=''
+master='master'
+
+while [[ "$#" -gt 0 ]]; do
+  case $1 in
+    -i) input="$(realpath "$2")"; shift ;;
+    -o) output="$2"; shift ;;
+    -m) master="$2"; shift ;;
+    -h|--help) help; exit 0 ;;
+    *) usage; exit 1 ;;
+  esac
+  shift
+done
+
+if [[ -z "$input" ]]; then usage; exit 1; fi
+if [[ -z "$output" ]]; then
+  output="$(dirname "$input")/export"
+  mkdir -p "$output"
+  output="$(realpath "$output")"
+fi
+
+>&2 echo -e "\e[96mExporting \"$input\"\e[0m"
+
+mkdir -p "$output"
+QT_QPA_PLATFORM=offscreen krita "$input" --export --export-filename "$output/$master.png"
+
+>&2 echo -e "\e[96mCanonicalizing master for \"$input\" (this may take a while)\e[0m"
+
+zopflipng -y --always_zopflify --keepcolortype --keepchunks=iCCP --iterations=15 --filters=0me --lossy_transparent "$output/$master.png" "$output/$master.png"
+
+>&2 echo -e "\e[96mExport for \"$input\" complete!\e[0m"

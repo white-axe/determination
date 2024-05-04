@@ -1,0 +1,35 @@
+# Determination - Deterministic rendering environment for music and art
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3.
+
+# This patch causes PNG images exported using `krita --export` to be exported
+# using Rec. 2020 instead of sRGB.
+
+--- a/plugins/impex/png/kis_png_export.cc
++++ b/plugins/impex/png/kis_png_export.cc
+@@ -58,10 +58,10 @@ KisImportExportErrorCode KisPNGExport::convert(KisDocument *document, QIODevice
+     c.fromQColor(Qt::white);
+     options.transparencyFillColor = configuration->getColor("transparencyFillcolor", c).toQColor();
+     options.saveSRGBProfile = configuration->getBool("saveSRGBProfile", false);
+-    options.forceSRGB = configuration->getBool("forceSRGB", true);
++    options.forceSRGB = configuration->getBool("forceSRGB", false);
+     options.storeAuthor = configuration->getBool("storeAuthor", false);
+     options.storeMetaData = configuration->getBool("storeMetaData", false);
+-    options.saveAsHDR = configuration->getBool("saveAsHDR", false);
++    options.saveAsHDR = configuration->getBool("saveAsHDR", true);
+     options.downsample = configuration->getBool("downsample", false);
+ 
+     vKisAnnotationSP_it beginIt = image->beginAnnotations();
+@@ -102,8 +102,8 @@ KisPropertiesConfigurationSP KisPNGExport::defaultConfiguration(const QByteArray
+ 
+     cfg->setProperty("transparencyFillcolor", v);
+     cfg->setProperty("saveSRGBProfile", false);
+-    cfg->setProperty("forceSRGB", true);
+-    cfg->setProperty("saveAsHDR", false);
++    cfg->setProperty("forceSRGB", false);
++    cfg->setProperty("saveAsHDR", true);
+     cfg->setProperty("storeMetaData", false);
+     cfg->setProperty("storeAuthor", false);
+     cfg->setProperty("downsample", false);

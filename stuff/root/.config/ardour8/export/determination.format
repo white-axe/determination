@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Determination - Deterministic rendering environment for music and art
+  Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, version 3.
+-->
+<ExportFormatSpecification name="Determination" id="7f40372c-c18e-4155-a6b8-80fb8ab840a1" with-cue="0" with-toc="0" with-mp4chaps="0" command="" analyse="1" reimport="0" soundcloud-upload="0">
+  <Encoding id="F_FLAC" type="T_Sndfile" extension="flac" name="FLAC" has-sample-format="1" channel-limit="8"/>
+  <SampleRate rate="SR_Session"/>
+  <SRCQuality quality="SRC_SincBest"/>
+  <Watermark level="-20" duration="0" interval="0"/>
+  <EncodingOptions>
+    <Option name="sample-format" value="SF_24"/>
+    <Option name="dithering" value="D_None"/>
+    <Option name="tag-metadata" value="0"/>
+    <Option name="tag-support" value="1"/>
+    <Option name="broadcast-info" value="0"/>
+  </EncodingOptions>
+  <Processing>
+    <Normalize enabled="0" loudness="0" use-tp-limiter="1" dbfs="0" lufs="-23" dbtp="-1"/>
+    <Silence>
+      <Start>
+        <Trim enabled="0"/>
+        <Add enabled="0">
+          <Duration format="Timecode" hours="0" minutes="0" seconds="0" frames="0"/>
+        </Add>
+      </Start>
+      <End>
+        <Trim enabled="0"/>
+        <Add enabled="0">
+          <Duration format="Timecode" hours="0" minutes="0" seconds="0" frames="0"/>
+        </Add>
+      </End>
+    </Silence>
+  </Processing>
+</ExportFormatSpecification>

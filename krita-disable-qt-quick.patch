@@ -1,0 +1,46 @@
+# Determination - Deterministic rendering environment for music and art
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3.
+
+# The more unnecessary stuff we disable, the better.
+
+--- a/libs/CMakeLists.txt
++++ b/libs/CMakeLists.txt
+@@ -15,9 +15,9 @@ add_subdirectory( image )
+ add_subdirectory( ui )
+ add_subdirectory( impex )
+ add_subdirectory( libkis )
+-if (NOT APPLE AND HAVE_QT_QUICK)
+-    add_subdirectory( libqml )
+-endif()
++#if (NOT APPLE AND HAVE_QT_QUICK)
++#    add_subdirectory( libqml )
++#endif()
+ add_subdirectory( resources )
+ add_subdirectory( metadata )
+ add_subdirectory( resourcewidgets )
+--- a/plugins/dockers/CMakeLists.txt
++++ b/plugins/dockers/CMakeLists.txt
+@@ -25,13 +25,13 @@ add_subdirectory(svgcollectiondocker)
+ add_subdirectory(histogram)
+ add_subdirectory(gamutmask)
+ add_subdirectory(recorder)
+-if(NOT APPLE AND HAVE_QT_QUICK)
+-    add_subdirectory(touchdocker)
+-    option(ENABLE_CPU_THROTTLE "Build the CPU Throttle Docker" OFF)
+-    if (ENABLE_CPU_THROTTLE)
+-        add_subdirectory(throttle)
+-    endif()
+-endif()
++#if(NOT APPLE AND HAVE_QT_QUICK)
++#    add_subdirectory(touchdocker)
++#    option(ENABLE_CPU_THROTTLE "Build the CPU Throttle Docker" OFF)
++#    if (ENABLE_CPU_THROTTLE)
++#        add_subdirectory(throttle)
++#    endif()
++#endif()
+ 
+ add_subdirectory(logdocker)
+ add_subdirectory(snapshotdocker)
