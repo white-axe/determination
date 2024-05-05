@@ -6,11 +6,13 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/release-23.11";
+    unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
-  outputs = { self, nixpkgs }:
+  outputs = { self, nixpkgs, unstable }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
+      pkgsUnstable = import unstable { inherit system; };
       config = import ./config.nix;
       raw = pkgs.buildEnv {
         name = "determination";
@@ -72,6 +74,7 @@
         default = docker;
         docker = docker;
         raw = raw;
+        skopeo = pkgsUnstable.skopeo;
       };
     };
 }

@@ -27,8 +27,6 @@ jobs:
       uses: actions/checkout@v4
     - name: Install Nix
       uses: cachix/install-nix-action@v26
-    - name: Log in to ghcr.io
-      run: skopeo login -u ${{ github.actor }} -p ${{ github.token }} ghcr.io
     - name: Build
       run: |
         nix build -L
@@ -37,18 +35,23 @@ jobs:
       uses: actions/attest-build-provenance@v1
       with:
         subject-path: docker-image-determination.tar.gz
-    - run: sha256sum docker-image-determination.tar.gz
-    - run: skopeo inspect docker-archive:docker-image-determination.tar.gz
-    - run: skopeo inspect --raw docker-archive:docker-image-determination.tar.gz
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: docker-image-determination
         path: docker-image-determination.tar.gz
+    - name: Install Skopeo from Nixpkgs
+      run: |
+        nix build -L '.#skopeo'
+        ln -s result/bin/skopeo skopeo
+    - run: sha256sum docker-image-determination.tar.gz
+    - run: ./skopeo inspect docker-archive:docker-image-determination.tar.gz
+    - run: ./skopeo inspect --raw docker-archive:docker-image-determination.tar.gz
     - name: Upload to ghcr.io
       id: upload
       if: ${{ github.repository_owner == 'white-axe' && github.event_name == 'release' }}
       run: |
+        ./skopeo login -u ${{ github.actor }} -p ${{ github.token }} --compat-auth-file ~/.docker/config.json ghcr.io
         tag=${{ github.event.release.tag_name }}
         old=
         if [[ ${tag#v} =~ ^[[:digit:]] ]]; then
@@ -56,12 +59,12 @@ jobs:
         fi
         while [[ $tag != $old ]]; do
           echo Tag $tag
-          skopeo copy docker-archive:docker-image-determination.tar.gz docker://ghcr.io/${{ github.repository }}:$tag
+          ./skopeo copy --preserve-digests docker-archive:docker-image-determination.tar.gz docker://ghcr.io/${{ github.repository }}:$tag
           old=$tag
           tag=${tag%.*}
         done
         echo Tag latest
-        skopeo copy --digestfile digest docker-archive:docker-image-determination.tar.gz docker://ghcr.io/${{ github.repository }}:latest
+        ./skopeo copy --preserve-digests --digestfile digest docker-archive:docker-image-determination.tar.gz docker://ghcr.io/${{ github.repository }}:latest
         cat digest
         echo "digest=$(cat digest)" >> $GITHUB_OUTPUT
     - name: Attest ghcr.io image
