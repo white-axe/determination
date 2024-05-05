@@ -67,10 +67,12 @@ jobs:
         fi
         while [[ $tag != $old ]]; do
           echo Tag $tag
-          ./skopeo copy --preserve-digests --digestfile digest docker-archive:docker-image-determination.tar.gz docker://ghcr.io/${{ github.repository }}:$tag
+          ./skopeo copy --preserve-digests docker-archive:docker-image-determination.tar.gz docker://ghcr.io/${{ github.repository }}:$tag
           old=$tag
           tag=${tag%.*}
         done
+        echo Tag latest
+        ./skopeo copy --preserve-digests --digestfile digest docker-archive:docker-image-determination.tar.gz docker://ghcr.io/${{ github.repository }}:latest
         cat digest
         echo "digest=$(cat digest)" >> $GITHUB_OUTPUT
     - name: Attest ghcr.io image
@@ -80,6 +82,3 @@ jobs:
         subject-name: ghcr.io/${{ github.repository }}
         subject-digest: ${{ steps.upload.outputs.digest }}
         push-to-registry: true
-    - name: Update latest tag on ghcr.io
-      if: ${{ github.repository_owner == 'white-axe' && github.event_name == 'release' }}
-      run: ./skopeo copy --preserve-digests docker-archive:docker-image-determination.tar.gz docker://ghcr.io/${{ github.repository }}:latest
