@@ -75,6 +75,8 @@
         docker = docker;
         raw = raw;
         skopeo = pkgsUnstable.skopeo;
+        tar = pkgs.gnutar;
+        zstd = pkgs.zstd;
       };
     };
 }

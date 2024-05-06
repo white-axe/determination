@@ -83,3 +83,72 @@ jobs:
           subject-name: ghcr.io/${{ github.repository }}
           subject-digest: ${{ steps.upload.outputs.digest }}
           push-to-registry: true
+  close:
+    name: Close
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: cachix/install-nix-action@v26
+      - name: Install Tar and Zstandard from Nixpkgs
+        run: |
+          nix build -L '.#tar'
+          nix copy --to ./closure-tar '.#tar' --no-check-sigs
+          ln -s "$(realpath "result/bin/tar")" tar
+          nix build -L '.#zstd'
+          nix copy --to ./closure-zstd '.#zstd' --no-check-sigs
+          ln -s "$(realpath "result-bin/bin/zstd")" zstd
+      - name: Close
+        run: |
+          nix store gc
+          paths=
+          image_derivation="$(nix derivation show | jq -r 'keys_unsorted[0]')"
+          for derivation in $(nix derivation show -r | jq -r 'map_values(select(.env.urls or .env.url)) | keys[]'); do
+            echo -e "\e[96mBuilding source derivation $derivation\e[0m"
+            paths+="$derivation"$'\n'
+            paths+="$(nix build "$derivation^*" --print-out-paths)"$'\n'
+          done
+          nix copy --to ./closure-input "$image_derivation" --no-check-sigs
+          mkdir closure-determination
+          mkdir -p closure-determination/nix/store
+          sudo mv closure-input/nix/store/* closure-determination/nix/store/
+          for src in $paths; do
+            if [ -e "$src" ]; then
+              dst="closure-determination/nix/store/$(basename "$src")"
+              if [ ! -e "$dst" ]; then
+                echo -e "\e[96mMoving $src to $dst\e[0m"
+                sudo mv "$src" "$dst"
+              fi
+            fi
+          done
+      - name: Compress
+        run: |
+          sudo rm -rf /nix/store/*
+          for src in closure-tar/nix/store/*; do
+            dst="/nix/store/$(basename "$src")"
+            if [ ! -e "$dst" ]; then
+              echo -e "\e[96mMoving $src to $dst\e[0m"
+              sudo mv "$src" "$dst"
+            fi
+          done
+          for src in closure-zstd/nix/store/*; do
+            dst="/nix/store/$(basename "$src")"
+            if [ ! -e "$dst" ]; then
+              echo -e "\e[96mMoving $src to $dst\e[0m"
+              sudo mv "$src" "$dst"
+            fi
+          done
+          cd closure-determination
+          ../tar --sort=name --mtime='@1' --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime -cvf - * | ../zstd -T1 --ultra -20 > ../closure-determination.tar.zst
+          cd ..
+          sudo rm -r closure-determination/
+      - name: Attest artifact
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: closure-determination.tar.zst
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: closure-determination
+          path: closure-determination.tar.zst
