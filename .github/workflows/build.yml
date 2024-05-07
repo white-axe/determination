@@ -15,7 +15,7 @@ on:
       - published
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
   attestations: write
   id-token: write
   packages: write
