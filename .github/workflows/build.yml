@@ -68,6 +68,7 @@ jobs:
           ./skopeo inspect --raw docker-archive:docker-image-determination.tar.gz | jq -M >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
       - name: Upload to ghcr.io
+        id: upload-ghcr
         if: ${{ github.repository_owner == 'white-axe' && github.event_name == 'release' }}
         run: |
           ./skopeo login -u ${{ github.actor }} -p ${{ github.token }} --compat-auth-file ~/.docker/config.json ghcr.io
@@ -93,7 +94,7 @@ jobs:
         uses: actions/attest-build-provenance@v1
         with:
           subject-name: ghcr.io/${{ github.repository }}
-          subject-digest: ${{ steps.upload.outputs.digest }}
+          subject-digest: ${{ steps.upload-ghcr.outputs.digest }}
           push-to-registry: true
       - name: Prepare ghcr.io attestation for release
         if: ${{ github.repository_owner == 'white-axe' && github.event_name == 'release' }}
