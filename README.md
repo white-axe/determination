@@ -42,10 +42,12 @@ This creates a gzip-compressed tarball named "result" with no file extension. Im
 
 If you modify the contents of this repository, keep in mind that Nix ignores untracked files in Git, so always use `git add` to add untracked files before building.
 
-# License
+By default, the image will be built using some cached binaries from Nix's binary cache. To disable the binary cache, add `--option substitute false` to the `nix` command, which will cause all source files to be fetched from their respective project websites and then build everything from source. In case any of these project websites and/or the Nix cache are suffering from link rot, each release on GitHub also comes with a closure that contains the source code of everything you need to build this image offline aside from Nix itself. Because GitHub has a file size limit for releases, the closures are distributed in parts which must be concatenated together before extracting.
 
-The compiled image and the source files in this repository are licensed under the [GNU General Public License v3.0 only](https://www.gnu.org/licenses/gpl-3.0.en.html) for license compatibility with some of the similarly-licensed software that is modified and then included in this image.
+# Legal
+
+The compiled image and the source files in this repository are licensed under the [GNU General Public License v3.0 only](https://www.gnu.org/licenses/gpl-3.0.en.html) for license compatibility with some of the similarly-licensed software that is included in this image.
 
 Most of the Nix packages in the source code of this image are based on the ones from the [release-23.11 branch of the Nixpkgs repository](https://github.com/NixOS/nixpkgs/tree/release-23.11). Their license can be found [here](https://github.com/NixOS/nixpkgs/blob/release-23.11/COPYING).
 
-Links to all the source code for all of the other third-party software included in this image and used for building this image, their licenses, as well as the patch files used when building them that are not included in this repository, are available in the [release-23.11 branch of the Nixpkgs repository](https://github.com/NixOS/nixpkgs/tree/release-23.11). You may obtain a complete list of the names of the Nixpkgs packages included in this image and its build process by installing [nix-tree](https://github.com/utdemir/nix-tree) and then running the command `nix-tree --derivation '.#'` from within the root directory of this repository. You can also email me at whiteaxe at tuta.io if you wish to obtain any of these things.
+Links to all the source code for all of the other third-party software included in this image and used for building this image, their licenses, as well as the patch files used when building them that are not included in this repository, are available in the [release-23.11 branch of the Nixpkgs repository](https://github.com/NixOS/nixpkgs/tree/release-23.11). They are also available in the closures distributed with each release of this image on GitHub.
