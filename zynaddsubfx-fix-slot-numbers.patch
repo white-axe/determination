@@ -12,6 +12,17 @@
 # plugin with a GUI. It should be fine since we never use the ZynAddSubFX GUI in
 # this image.
 
+--- a/DPF/distrho/src/DistrhoPluginLV2.cpp
++++ b/DPF/distrho/src/DistrhoPluginLV2.cpp
+@@ -685,7 +685,7 @@ public:
+ 
+         updateParameterOutputsAndTriggers();
+ 
+-#if DISTRHO_PLUGIN_WANT_STATE && DISTRHO_PLUGIN_HAS_UI
++#if false
+         fEventsOutData.initIfNeeded(fURIDs.atomSequence);
+ 
+         LV2_Atom_Event* aev;
 --- a/src/Plugin/ZynAddSubFX/DistrhoPluginInfo.h
 +++ b/src/Plugin/ZynAddSubFX/DistrhoPluginInfo.h
 @@ -22,7 +22,7 @@
