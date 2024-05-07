@@ -49,6 +49,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
+            COPYING
             docker-image-determination.tar.gz
             docker-image-determination.tar.gz.sigstore.json
       - name: Install Skopeo from Nixpkgs
