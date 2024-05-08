@@ -1,0 +1,20 @@
+# Determination - Deterministic rendering environment for music and art
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3.
+
+# Disables an annoying warning about not being able to load from a resource
+# bundle.
+
+--- a/libs/resources/KoResourceBundle.cpp
++++ b/libs/resources/KoResourceBundle.cpp
+@@ -512,7 +512,7 @@ bool KoResourceBundle::loadResource(KoResourceSP resource)
+ 
+     if (!resource->loadFromDevice(resourceStore->device(),
+                                   KisGlobalResourcesInterface::instance())) {
+-        qWarning() << "Could not load the resource from the bundle" << resourceType << fileName << m_filename;
++        //qWarning() << "Could not load the resource from the bundle" << resourceType << fileName << m_filename;
+         return false;
+     }
+ 

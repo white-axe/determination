@@ -22,6 +22,7 @@ in
       })
       ./krita-disable-plugins.patch
       ./krita-disable-qt-quick.patch
+      ./krita-disable-resource-bundle-warning.patch
       ./krita-enable-png-hdr.patch
       ./krita-unforce-platform.patch
     ];

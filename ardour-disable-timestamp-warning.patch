@@ -1,0 +1,20 @@
+# Determination - Deterministic rendering environment for music and art
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3.
+
+# Disables an annoying and useless warning that sometimes happens when exporting
+# projects.
+
+--- a/libs/backends/dummy/dummy_audiobackend.cc
++++ b/libs/backends/dummy/dummy_audiobackend.cc
+@@ -822,7 +822,7 @@ DummyAudioBackend::midi_event_put (
+ 	DummyMidiBuffer& dst = * static_cast<DummyMidiBuffer*>(port_buffer);
+ 	if (dst.size () && (pframes_t)dst.back ()->timestamp () > timestamp) {
+ 		// nevermind, ::get_buffer() sorts events, but always print warning
+-		fprintf (stderr, "DummyMidiBuffer: it's too late for this event %d > %d.\n", (pframes_t)dst.back ()->timestamp (), timestamp);
++		//fprintf (stderr, "DummyMidiBuffer: it's too late for this event %d > %d.\n", (pframes_t)dst.back ()->timestamp (), timestamp);
+ 	}
+ 	dst.push_back (std::shared_ptr<DummyMidiEvent>(new DummyMidiEvent (timestamp, buffer, size)));
+ #if 0 // DEBUG MIDI EVENTS

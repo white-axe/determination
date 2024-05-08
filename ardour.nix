@@ -18,6 +18,7 @@ in
     patches = [
       ./ardour-disable-fpu-optimization.patch
       ./ardour-disable-gui.patch
+      ./ardour-disable-timestamp-warning.patch
     ];
     nativeBuildInputs = [
       pkgs.itstool
