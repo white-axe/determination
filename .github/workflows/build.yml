@@ -69,7 +69,7 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
       - name: Upload to ghcr.io
         id: upload-ghcr
-        if: ${{ github.repository_owner == 'white-axe' && github.event_name == 'release' }}
+        if: ${{ github.event_name == 'release' }}
         run: |
           ./skopeo login -u ${{ github.actor }} -p ${{ github.token }} --compat-auth-file ~/.docker/config.json ghcr.io
           ./skopeo inspect docker-archive:docker-image-determination.tar.gz | jq -er '.Digest' > digest
@@ -90,17 +90,17 @@ jobs:
           ./skopeo copy --preserve-digests docker-archive:docker-image-determination.tar.gz docker://ghcr.io/${{ github.repository }}:latest
       - name: Attest ghcr.io image
         id: attest-ghcr
-        if: ${{ github.repository_owner == 'white-axe' && github.event_name == 'release' }}
+        if: ${{ github.event_name == 'release' }}
         uses: actions/attest-build-provenance@v1
         with:
           subject-name: ghcr.io/${{ github.repository }}
           subject-digest: ${{ steps.upload-ghcr.outputs.digest }}
           push-to-registry: true
       - name: Prepare ghcr.io attestation for release
-        if: ${{ github.repository_owner == 'white-axe' && github.event_name == 'release' }}
+        if: ${{ github.event_name == 'release' }}
         run: cp "${{ steps.attest-ghcr.outputs.bundle-path }}" ./ghcr.io.sigstore.json
       - name: Release ghcr.io attestation
-        if: ${{ github.repository_owner == 'white-axe' && github.event_name == 'release' }}
+        if: ${{ github.event_name == 'release' }}
         uses: softprops/action-gh-release@v2
         with:
           files: ghcr.io.sigstore.json
