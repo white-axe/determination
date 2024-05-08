@@ -10,7 +10,6 @@ set -eEo pipefail
 help () {
   >&2 echo ''
   >&2 echo 'determination-ardour-export: export an Ardour project deterministically as a master FLAC file and track FLAC files'
-  >&2 echo ''
   usage
 }
 
