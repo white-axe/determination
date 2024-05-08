@@ -24,6 +24,16 @@ for j, track in ipairs(session:get_tracks():table()) do
   end
 end
 
-assert(session:save_state("~exporttmp-" .. os.getenv("DETERMINATION_ARDOUR_SESSION")) == 0)
+assert(
+  session:save_state(
+    "~exporttmp-" .. os.getenv("DETERMINATION_ARDOUR_SESSION"),
+    false, -- pending
+    false, -- switch_to_snapshot
+    false, -- template_only
+    true,  -- for_archive
+    false  -- only_used_assets
+  ) == 0
+)
+
 close_session()
 quit()
