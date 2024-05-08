@@ -18,6 +18,7 @@ in
       hash = "sha256-TWSwHpW2hZeQkkINN+IIot9CpIak9vawDCvR+Mk7514=";
     };
     patches = [
+      ./zynaddsubfx-disable-executable.patch
       ./zynaddsubfx-fix-slot-numbers.patch
     ];
     nativeBuildInputs = [
@@ -35,7 +36,4 @@ in
       "-DGuiModule=off"
       "-DOssEnable=OFF"
     ];
-    postInstall = ''
-      rm "$out/bin/zynaddsubfx"
-    '';
   }
