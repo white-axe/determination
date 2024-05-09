@@ -4,7 +4,7 @@ If you're a software developer, you may have heard of reproducible builds. I thi
 
 This is a Docker image that can reproducibly render my music and art from the project files. Every time you use this Docker image to render my music and art, even on different computers, the output files should be the same. Please make sure you run it on a computer with an x86-64 CPU, since floating-point arithmetic isn't portable across CPU architectures!
 
-It comes with the following software, slimmed down and compiled without floating-point SIMD optimizations so that they behave exactly the same on most x86-64 CPUs, excluding [certain Intel Pentium processors](https://en.wikipedia.org/wiki/Pentium_FDIV_bug), of course.
+It comes with the following software, slimmed down and compiled without floating-point SIMD optimizations so that they behave exactly the same on most x86-64 CPUs.
 
 * [Ardour](https://ardour.org), a digital audio workstation (DAW).
 * [Krita](https://krita.org/en/), a 2D digital painting program.
