@@ -19,6 +19,7 @@ in
     };
     patches = [
       ./zynaddsubfx-disable-executable.patch
+      ./zynaddsubfx-fix-dpf.patch
       ./zynaddsubfx-fix-slot-numbers.patch
     ];
     nativeBuildInputs = [
