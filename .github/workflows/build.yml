@@ -166,9 +166,9 @@ jobs:
             fi
           done
           cd closure-determination
-          size=$(../tar --sort=name --mtime='@1' --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime -cf - * | wc -c)
-          echo "Uncompressed archive will be $size bytes large"
-          ../tar --sort=name --mtime='@1' --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime -cf - * | ../zstd --stream-size=$size -T1 --ultra -20 > ../closure-determination.tar.zst
+          size=$(LC_ALL=C ../tar --sort=name --format=posix --mtime='@1' --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime -cf - * | wc -c)
+          echo "Tarball without compression will be $size bytes large"
+          LC_ALL=C ../tar --sort=name --format=posix --mtime='@1' --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime -cf - * | ../zstd --stream-size=$size -T1 --ultra -20 > ../closure-determination.tar.zst
           cd ..
           sudo rm -r closure-determination/
       - name: Attest artifact
