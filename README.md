@@ -2,7 +2,7 @@
 
 If you're a software developer, you may have heard of reproducible builds. I think it's important to consider extending binary reproducibility to things other than software.
 
-This is a Docker image that can reproducibly render my music and art from the project files. Every time you use this Docker image to render my music and art, even on different computers, the output files should be the same. Please make sure you run it on a computer with an x86-64 CPU, since floating-point arithmetic isn't portable across CPU architectures!
+This is an [OCI container image](https://opencontainers.org) that can reproducibly render my music and art from the project files. Every time you use this container image to render my music and art, even on different computers, the output files should be the same. Please make sure you run it on a computer with an x86-64 CPU, since floating-point arithmetic isn't portable across CPU architectures!
 
 It comes with the following software, slimmed down and compiled without floating-point SIMD optimizations so that they behave exactly the same on most x86-64 CPUs.
 
@@ -20,15 +20,15 @@ Then run this command from a terminal, replacing `<path>` with the absolute path
 docker run -v <path>:/data --rm -it ghcr.io/white-axe/determination
 ```
 
-This downloads the image, creates a new container with the project directory mounted at `/data` in the container, and connects you to a Bash shell inside the container. You can also add a `:` and a version after the `ghcr.io/white-axe/determination` if you want a specific version of the image, e.g. `ghcr.io/white-axe/determination:1` for the latest version with a major version number of 1.
+This downloads the image, uses it to create a new container with the project directory mounted at `/data` in the container, and connects you to a Bash shell inside the container. You can also add a `:` and a version after the `ghcr.io/white-axe/determination` if you want a specific version of the image, e.g. `ghcr.io/white-axe/determination:1` for the latest version with a major version number of 1.
 
 Inside of the container, the command `determination-ardour-export` is provided for rendering Ardour projects. Assuming the .ardour file is named "session.ardour", you can run `determination-ardour-export -i /data/session.ardour` to export it as audio. Run `determination-ardour-export --help` for more detailed usage instructions. `determination-krita-export` is also provided with similar usage for rendering Krita projects.
 
 # Building the image from source
 
-These are the instructions for building the Docker image from the source code in this repository. You don't need to do this if you just want to use the Docker image.
+These are the instructions for building the container image from the source code in this repository. You don't need to do this if you just want to use the container image.
 
-Install the [Nix package manager](https://nixos.org) on an x86-64 Linux computer and run the following commands to build the Docker image. Docker isn't required to be installed to build the image.
+Install the [Nix package manager](https://nixos.org) on an x86-64 Linux computer and run the following commands to build the container image. Docker isn't required to be installed to build the image.
 
 ```
 git clone https://github.com/white-axe/determination
@@ -38,7 +38,7 @@ nix --experimental-features 'nix-command flakes' build
 
 Feel free also to edit config.nix before running the `nix` command to exclude components from the image that you don't need.
 
-This creates a gzip-compressed tarball named "result" with no file extension. Import it into Docker or Podman with `docker load -i ./result` or `podman load -i ./result` on a computer that has Docker or Podman installed.
+This creates a tarball named "result" with no file extension. Import it into Docker or Podman with `docker load -i ./result` or `podman load -i ./result` on a computer that has Docker or Podman installed.
 
 If you modify the contents of this repository, keep in mind that Nix ignores untracked files in Git, so always use `git add` to add untracked files before building.
 

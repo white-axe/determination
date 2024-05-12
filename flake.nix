@@ -46,33 +46,51 @@
           "/root/.config/ardour8"
         ];
       };
-      docker = pkgs.dockerTools.buildImage {
-        name = "determination";
-        tag = "latest";
-        copyToRoot = raw;
-        runAsRoot = ''
-          ${pkgs.dockerTools.shadowSetup}
-        '' + pkgs.lib.optionalString (!config.krita) ''
-          rm -f /bin/determination-krita-*
-          rm -f /bin/.determination-krita-*
-        '' + pkgs.lib.optionalString (!config.ardour) ''
-          rm -f /bin/determination-ardour-*
-          rm -f /bin/.determination-ardour-*
-        '';
-        #compressor = "zstd";
-        config = {
-          Cmd = [ "/bin/bash" ];
-          Labels = {
-            "org.opencontainers.image.source" = "https://github.com/white-axe/determination";
-            "org.opencontainers.image.description" = "Deterministic rendering environment for white-axe's music and art";
-            "org.opencontainers.image.licenses" = "GPL-3.0-only";
+      container = pkgs.stdenvNoCC.mkDerivation {
+        name = "container-image-determination";
+        src = pkgs.dockerTools.buildImage {
+          name = "determination";
+          tag = "latest";
+          copyToRoot = raw;
+          runAsRoot = ''
+            ${pkgs.dockerTools.shadowSetup}
+          '' + pkgs.lib.optionalString (!config.krita) ''
+            rm -f /bin/determination-krita-*
+            rm -f /bin/.determination-krita-*
+          '' + pkgs.lib.optionalString (!config.ardour) ''
+            rm -f /bin/determination-ardour-*
+            rm -f /bin/.determination-ardour-*
+          '';
+          #compressor = "zstd";
+          config = {
+            Cmd = [ "/bin/bash" ];
+            Labels = {
+              "org.opencontainers.image.source" = "https://github.com/white-axe/determination";
+              "org.opencontainers.image.description" = "Deterministic rendering environment for white-axe's music and art";
+              "org.opencontainers.image.licenses" = "GPL-3.0-only";
+            };
           };
         };
+        buildInputs = [
+          pkgs.gnutar
+          pkgs.skopeo
+        ];
+        unpackPhase = ":";
+        buildPhase = ''
+          skopeo --debug --insecure-policy --tmpdir="$TMPDIR" copy -f oci --dest-compress-format zstd --dest-compress-level 20 docker-archive:"$src" oci-archive:image.tar
+          mkdir image
+          tar -C image -xf image.tar
+          rm image.tar
+        '';
+        installPhase = ''
+          cd image
+          LC_ALL=C tar --sort=name --format=posix --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime -cf "$out" *
+        '';
       };
     in {
       packages.${system} = {
-        default = docker;
-        docker = docker;
+        default = container;
+        container = container;
         raw = raw;
         skopeo = pkgsUnstable.skopeo;
         tar = pkgs.gnutar;
