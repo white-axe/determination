@@ -43,7 +43,6 @@
           "/bin"
         ] ++ pkgs.lib.optionals config.ardour [
           "/lib/lv2"
-          "/lib/vst"
           "/root/.config/ardour8"
         ];
       };
