@@ -100,7 +100,6 @@ jobs:
         with:
           subject-name: ghcr.io/${{ github.repository }}
           subject-digest: ${{ steps.upload-ghcr.outputs.digest }}
-          push-to-registry: true
       - name: Prepare ghcr.io attestation for release
         if: ${{ github.event_name == 'release' }}
         run: cp "${{ steps.attest-ghcr.outputs.bundle-path }}" ./ghcr.io.sigstore.json
