@@ -31,27 +31,27 @@ jobs:
       - name: Build
         run: |
           nix build -L
-          mv result container-image-determination.tar.gz
+          mv result container-image-determination.tar
       - name: Attest artifact
         id: attest-artifact
         uses: actions/attest-build-provenance@v1
         with:
-          subject-path: container-image-determination.tar.gz
+          subject-path: container-image-determination.tar
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: container-image-determination
-          path: container-image-determination.tar.gz
+          path: container-image-determination.tar
       - name: Prepare release files
-        run: cp "${{ steps.attest-artifact.outputs.bundle-path }}" ./container-image-determination.tar.gz.sigstore.json
+        run: cp "${{ steps.attest-artifact.outputs.bundle-path }}" ./container-image-determination.tar.sigstore.json
       - name: Release
         if: ${{ github.event_name == 'release' }}
         uses: softprops/action-gh-release@v2
         with:
           files: |
             COPYING
-            container-image-determination.tar.gz
-            container-image-determination.tar.gz.sigstore.json
+            container-image-determination.tar
+            container-image-determination.tar.sigstore.json
       - name: Install Skopeo from Nixpkgs
         run: |
           nix build -L '.#skopeo'
@@ -60,19 +60,19 @@ jobs:
         run: |
           echo '### Skopeo Inspection' >> $GITHUB_STEP_SUMMARY
           echo '```json' >> $GITHUB_STEP_SUMMARY
-          ./skopeo inspect oci-archive:container-image-determination.tar.gz | jq -M >> $GITHUB_STEP_SUMMARY
+          ./skopeo inspect oci-archive:container-image-determination.tar | jq -M >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo '' >> $GITHUB_STEP_SUMMARY
           echo '### Manifest' >> $GITHUB_STEP_SUMMARY
           echo '```json' >> $GITHUB_STEP_SUMMARY
-          ./skopeo inspect --raw oci-archive:container-image-determination.tar.gz | jq -M >> $GITHUB_STEP_SUMMARY
+          ./skopeo inspect --raw oci-archive:container-image-determination.tar | jq -M >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
       - name: Upload to ghcr.io
         id: upload-ghcr
         if: ${{ github.event_name == 'release' }}
         run: |
           ./skopeo login -u ${{ github.actor }} -p ${{ github.token }} --compat-auth-file ~/.docker/config.json ghcr.io
-          ./skopeo inspect oci-archive:container-image-determination.tar.gz | jq -er '.Digest' > digest
+          ./skopeo inspect oci-archive:container-image-determination.tar | jq -er '.Digest' > digest
           cat digest
           echo "digest=$(cat digest)" >> $GITHUB_OUTPUT
           tag=${{ github.event.release.tag_name }}
@@ -82,14 +82,14 @@ jobs:
           fi
           while [[ $tag != $old ]]; do
             echo Tag $tag
-            ./skopeo copy --preserve-digests oci-archive:container-image-determination.tar.gz docker://ghcr.io/${{ github.repository }}:$tag
+            ./skopeo copy --preserve-digests oci-archive:container-image-determination.tar docker://ghcr.io/${{ github.repository }}:$tag
             old=$tag
             tag=${tag%.*}
           done
           latest=$(curl -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ github.token }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -er '.tag_name')
           if [[ "${{ github.event.release.tag_name }}" == "$latest" ]]; then
             echo Tag latest
-            ./skopeo copy --preserve-digests oci-archive:container-image-determination.tar.gz docker://ghcr.io/${{ github.repository }}:latest
+            ./skopeo copy --preserve-digests oci-archive:container-image-determination.tar docker://ghcr.io/${{ github.repository }}:latest
           else
             echo Not tagging this image as latest since this is not the latest release
           fi
