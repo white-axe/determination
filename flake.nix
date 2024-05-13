@@ -64,15 +64,10 @@
           #compressor = "zstd";
           config = {
             Cmd = [ "/bin/bash" ];
-            Labels = {
-              "org.opencontainers.image.source" = "https://github.com/white-axe/determination";
-              "org.opencontainers.image.description" = "Deterministic rendering environment for white-axe's music and art";
-              "org.opencontainers.image.licenses" = "GPL-3.0-only";
-            };
           };
         };
         buildInputs = [
-          pkgs.gnutar
+          pkgs.jq
           pkgs.skopeo
         ];
         unpackPhase = ":";
@@ -81,6 +76,21 @@
           mkdir image
           tar -C image -xf image.tar
           rm image.tar
+          cd image
+          digests=$(jq -er '.manifests[].digest' < index.json)
+          i=0
+          for digest in $digests; do
+            digest=''${digest#*:}
+            cd blobs/sha256
+            jq -c ".annotations += { \"org.opencontainers.image.description\": \"Deterministic rendering environment for white-axe's music and art\", \"org.opencontainers.image.licenses\": \"GPL-3.0-only\", \"org.opencontainers.image.source\": \"https://github.com/white-axe/determination\", \"org.opencontainers.image.title\": \"Determination\" }" < $digest > $digest.out && mv $digest.out $digest
+            new_size=$(wc -c < $digest)
+            new_digest=$(sha256sum $digest | awk '{print $1}')
+            mv $digest $new_digest
+            cd ../..
+            jq -c ".manifests[$i] += { digest: \"sha256:$new_digest\", size: $new_size }" < index.json > index.json.out && mv index.json.out index.json
+            ((++i))
+          done
+          cd ..
         '';
         installPhase = ''
           cd image
