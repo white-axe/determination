@@ -12,7 +12,7 @@ in
     version = version;
     src = pkgs.fetchurl {
       url = "https://aubio.org/pub/aubio-${version}.tar.bz2";
-      sha256 = "1npks71ljc48w6858l9bq30kaf5nph8z0v61jkfb70xb9np850nl";
+      hash = "sha256-1IKCrk2rg7PclMFs8BG8tjg1wcArUVSQ4YgwScPR89o=";
     };
     nativeBuildInputs = [
       pkgs.pkg-config

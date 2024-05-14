@@ -9,7 +9,7 @@ let
 in
   pkgs.stdenv.mkDerivation {
     name = "zynaddsubfx";
-    versio = version;
+    version = version;
     src = pkgs.fetchFromGitHub {
       owner = "white-axe";
       repo = "zynaddsubfx";

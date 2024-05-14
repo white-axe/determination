@@ -15,7 +15,7 @@ in
         "https://fftw.org/fftw-${version}.tar.gz"
         "ftp://ftp.fftw.org/pub/fftw/fftw-${version}.tar.gz"
       ];
-      sha256 = "sha256-VskyVJhSzdz6/as4ILAgDHdCZ1vpIXnlnmIVs0DiZGc=";
+      hash = "sha256-VskyVJhSzdz6/as4ILAgDHdCZ1vpIXnlnmIVs0DiZGc=";
     };
     patches = [
       (pkgs.fetchpatch {
