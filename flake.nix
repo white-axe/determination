@@ -67,7 +67,7 @@
             Cmd = [ "/bin/bash" ];
           };
         };
-        buildInputs = [
+        nativeBuildInputs = [
           pkgs.jq
           pkgs.skopeo
         ];
