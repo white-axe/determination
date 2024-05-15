@@ -20,6 +20,7 @@
           ./stuff
           pkgs.bashInteractive
           pkgs.coreutils
+          pkgs.getopt
         ] ++ pkgs.lib.optionals config.krita [
           (pkgs.callPackage ./krita.nix { })
           (pkgs.callPackage ./zopfli.nix { })
