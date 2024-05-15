@@ -35,7 +35,7 @@ track='track'
 opts=$(getopt -n determination-ardour-export -o i:o:m:t:h -l help -- "$@")
 eval set -- "$opts"
 while true; do
-  case $1 in
+  case "$1" in
     -i) input="$(realpath "$2")"; shift ;;
     -o) output="$2"; shift ;;
     -m) master="$2"; shift ;;
