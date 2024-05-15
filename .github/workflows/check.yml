@@ -1,0 +1,36 @@
+name: Check
+on:
+  push:
+  pull_request:
+  release:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    name: nix flake check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: cachix/install-nix-action@v26
+      - run: nix flake check
+  fmt:
+    name: nix fmt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: cachix/install-nix-action@v26
+      - run: nix fmt
+      - name: Verify that committed code was correctly formatted
+        run: |
+          git status
+          if [[ $(git status --porcelain) ]]; then
+            echo ''
+            git diff
+            echo -e "\nYour code is not formatted correctly; please run \`nix --experimental-features 'nix-command flakes' fmt\`"
+            exit 1
+          fi
