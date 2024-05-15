@@ -38,7 +38,7 @@ nix --experimental-features 'nix-command flakes' build
 
 Feel free also to edit config.nix before running the `nix` command to exclude components from the image that you don't need.
 
-This creates a tarball named "result" with no file extension. Import it into Podman using `podman load -i result` on a computer that has Podman installed. To import it into Docker, install [Skopeo](https://github.com/containers/skopeo) version 1.14.0 or later and then run `skopeo --insecure-policy copy oci-archive:result docker-daemon:determination:latest`.
+This creates a tarball named "result" with no file extension. Import it into Podman using `podman load -i result` on a computer that has Podman installed. To import it into Docker, install [Skopeo](https://github.com/containers/skopeo) and then run `skopeo copy oci-archive:result docker-archive:result-converted` to convert the tarball to Docker's format before importing it with `docker load -i result-converted`. You may need to run the `podman load` or `docker load` command as root or administrator.
 
 If you modify the contents of this repository, keep in mind that Nix ignores untracked files in Git, so always use `git add` to add untracked files before building.
 
