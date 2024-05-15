@@ -7,14 +7,12 @@
 let
   version = "2.16";
 in
-  pkgs.stdenv.mkDerivation {
-    name = "lcms2";
-    version = version;
-    src = pkgs.fetchurl {
-      url = "mirror://sourceforge/lcms/lcms2-${version}.tar.gz";
-      hash = "sha256-2HPTSti5tM6gEGMfGmIo0gh0deTcXnY+uBrMI9nUWlE=";
-    };
-    configureFlags = [
-      "CPPFLAGS=-DCMS_DONT_USE_SSE2=1"
-    ];
-  }
+pkgs.stdenv.mkDerivation {
+  name = "lcms2";
+  inherit version;
+  src = pkgs.fetchurl {
+    url = "mirror://sourceforge/lcms/lcms2-${version}.tar.gz";
+    hash = "sha256-2HPTSti5tM6gEGMfGmIo0gh0deTcXnY+uBrMI9nUWlE=";
+  };
+  configureFlags = [ "CPPFLAGS=-DCMS_DONT_USE_SSE2=1" ];
+}

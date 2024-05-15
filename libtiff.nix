@@ -7,24 +7,24 @@
 let
   version = "4.6.0";
 in
-  pkgs.stdenv.mkDerivation {
-    name = "libtiff";
-    version = version;
-    src = pkgs.fetchFromGitLab {
-      owner = "libtiff";
-      repo = "libtiff";
-      rev = "v${version}";
-      hash = "sha256-qCg5qjsPPynCHIg0JsPJldwVdcYkI68zYmyNAKUCoyw=";
-    };
-    nativeBuildInputs = [
-      pkgs.autoreconfHook
-      pkgs.pkg-config
-    ];
-    buildInputs = [
-      pkgs.boost
-      pkgs.freetype
-      pkgs.fontconfig
-      pkgs.libiconv
-      pkgs.libintl
-    ];
-  }
+pkgs.stdenv.mkDerivation {
+  name = "libtiff";
+  inherit version;
+  src = pkgs.fetchFromGitLab {
+    owner = "libtiff";
+    repo = "libtiff";
+    rev = "v${version}";
+    hash = "sha256-qCg5qjsPPynCHIg0JsPJldwVdcYkI68zYmyNAKUCoyw=";
+  };
+  nativeBuildInputs = [
+    pkgs.autoreconfHook
+    pkgs.pkg-config
+  ];
+  buildInputs = [
+    pkgs.boost
+    pkgs.freetype
+    pkgs.fontconfig
+    pkgs.libiconv
+    pkgs.libintl
+  ];
+}

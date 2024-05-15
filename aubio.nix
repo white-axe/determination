@@ -7,26 +7,26 @@
 let
   version = "0.4.9";
 in
-  pkgs.stdenv.mkDerivation {
-    name = "aubio";
-    version = version;
-    src = pkgs.fetchurl {
-      url = "https://aubio.org/pub/aubio-${version}.tar.bz2";
-      hash = "sha256-1IKCrk2rg7PclMFs8BG8tjg1wcArUVSQ4YgwScPR89o=";
-    };
-    nativeBuildInputs = [
-      pkgs.pkg-config
-      pkgs.python3
-      pkgs.wafHook
-    ];
-    buildInputs = [
-      pkgs.alsa-lib
-      (pkgs.callPackage ./fftw.nix { })
-      pkgs.libjack2
-      pkgs.libsamplerate
-      pkgs.libsndfile
-    ];
-    postPatch = ''
-      substituteInPlace waflib/*.py --replace "m='rU" "m='r" --replace "'rU'" "'r'"
-    '';
-  }
+pkgs.stdenv.mkDerivation {
+  name = "aubio";
+  inherit version;
+  src = pkgs.fetchurl {
+    url = "https://aubio.org/pub/aubio-${version}.tar.bz2";
+    hash = "sha256-1IKCrk2rg7PclMFs8BG8tjg1wcArUVSQ4YgwScPR89o=";
+  };
+  nativeBuildInputs = [
+    pkgs.pkg-config
+    pkgs.python3
+    pkgs.wafHook
+  ];
+  buildInputs = [
+    pkgs.alsa-lib
+    (pkgs.callPackage ./fftw.nix { })
+    pkgs.libjack2
+    pkgs.libsamplerate
+    pkgs.libsndfile
+  ];
+  postPatch = ''
+    substituteInPlace waflib/*.py --replace "m='rU" "m='r" --replace "'rU'" "'r'"
+  '';
+}

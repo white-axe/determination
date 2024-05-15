@@ -7,35 +7,35 @@
 let
   version = "24.02.0";
 in
-  pkgs.stdenv.mkDerivation {
-    name = "poppler";
-    version = version;
-    src = pkgs.fetchurl {
-      url = "https://poppler.freedesktop.org/poppler-${version}.tar.xz";
-      hash = "sha256-GRh6P90F8z59YExHmcGD3lygEYZAyIs3DdzzE2NDIi4=";
-    };
-    nativeBuildInputs = [
-      pkgs.cmake
-      pkgs.ninja
-      pkgs.pkg-config
-      pkgs.python3
-    ];
-    buildInputs = [
-      pkgs.boost
-      pkgs.freetype
-      pkgs.fontconfig
-      pkgs.libiconv
-      pkgs.libintl
-    ];
-    cmakeFlags = [
-      "-DENABLE_DCTDECODER=none"
-      "-DENABLE_GPGME=OFF"
-      "-DENABLE_LCMS=OFF"
-      "-DENABLE_LIBCURL=OFF"
-      "-DENABLE_LIBOPENJPEG=none"
-      "-DENABLE_LIBTIFF=OFF"
-      "-DENABLE_NSS3=OFF"
-      "-DENABLE_QT5=OFF"
-      "-DENABLE_QT6=OFF"
-    ];
-  }
+pkgs.stdenv.mkDerivation {
+  name = "poppler";
+  inherit version;
+  src = pkgs.fetchurl {
+    url = "https://poppler.freedesktop.org/poppler-${version}.tar.xz";
+    hash = "sha256-GRh6P90F8z59YExHmcGD3lygEYZAyIs3DdzzE2NDIi4=";
+  };
+  nativeBuildInputs = [
+    pkgs.cmake
+    pkgs.ninja
+    pkgs.pkg-config
+    pkgs.python3
+  ];
+  buildInputs = [
+    pkgs.boost
+    pkgs.freetype
+    pkgs.fontconfig
+    pkgs.libiconv
+    pkgs.libintl
+  ];
+  cmakeFlags = [
+    "-DENABLE_DCTDECODER=none"
+    "-DENABLE_GPGME=OFF"
+    "-DENABLE_LCMS=OFF"
+    "-DENABLE_LIBCURL=OFF"
+    "-DENABLE_LIBOPENJPEG=none"
+    "-DENABLE_LIBTIFF=OFF"
+    "-DENABLE_NSS3=OFF"
+    "-DENABLE_QT5=OFF"
+    "-DENABLE_QT6=OFF"
+  ];
+}

@@ -8,7 +8,12 @@
     nixpkgs.url = "github:NixOS/nixpkgs/release-23.11";
     unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
-  outputs = { self, nixpkgs, unstable }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      unstable,
+    }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
@@ -16,36 +21,36 @@
       config = import ./config.nix;
       raw = pkgs.buildEnv {
         name = "determination";
-        paths = [
-          ./stuff
-          pkgs.bashInteractive
-          pkgs.coreutils
-          pkgs.getopt
-        ] ++ pkgs.lib.optionals config.krita [
-          (pkgs.callPackage ./krita.nix { })
-          (pkgs.callPackage ./zopfli.nix { })
-        ] ++ pkgs.lib.optionals config.ardour [
-          (pkgs.callPackage ./ardour.nix { })
-          pkgs.ffmpeg
-          pkgs.flac
-          pkgs.gawk
-        ] ++ pkgs.lib.optionals config.ffmpeg [
-          pkgs.ffmpeg
-        ] ++ pkgs.lib.optionals config.flac [
-          pkgs.flac
-        ] ++ pkgs.lib.optionals config.exiftool [
-          pkgs.exiftool
-        ] ++ pkgs.lib.optionals config.zopfli [
-          (pkgs.callPackage ./zopfli.nix { })
-        ] ++ pkgs.lib.optionals (config.ardour && config.zynaddsubfx) [
-          (pkgs.callPackage ./zynaddsubfx.nix { })
-        ];
-        pathsToLink = [
-          "/bin"
-        ] ++ pkgs.lib.optionals config.ardour [
-          "/lib/lv2"
-          "/root/.config/ardour8"
-        ];
+        paths =
+          [
+            ./stuff
+            pkgs.bashInteractive
+            pkgs.coreutils
+            pkgs.getopt
+          ]
+          ++ pkgs.lib.optionals config.krita [
+            (pkgs.callPackage ./krita.nix { })
+            (pkgs.callPackage ./zopfli.nix { })
+          ]
+          ++ pkgs.lib.optionals config.ardour [
+            (pkgs.callPackage ./ardour.nix { })
+            pkgs.ffmpeg
+            pkgs.flac
+            pkgs.gawk
+          ]
+          ++ pkgs.lib.optionals config.ffmpeg [ pkgs.ffmpeg ]
+          ++ pkgs.lib.optionals config.flac [ pkgs.flac ]
+          ++ pkgs.lib.optionals config.exiftool [ pkgs.exiftool ]
+          ++ pkgs.lib.optionals config.zopfli [ (pkgs.callPackage ./zopfli.nix { }) ]
+          ++ pkgs.lib.optionals (config.ardour && config.zynaddsubfx) [
+            (pkgs.callPackage ./zynaddsubfx.nix { })
+          ];
+        pathsToLink =
+          [ "/bin" ]
+          ++ pkgs.lib.optionals config.ardour [
+            "/lib/lv2"
+            "/root/.config/ardour8"
+          ];
       };
       container = pkgs.stdenvNoCC.mkDerivation {
         name = "container-image-determination";
@@ -53,15 +58,18 @@
           name = "determination";
           tag = "latest";
           copyToRoot = raw;
-          runAsRoot = ''
-            ${pkgs.dockerTools.shadowSetup}
-          '' + pkgs.lib.optionalString (!config.krita) ''
-            rm -f /bin/determination-krita-*
-            rm -f /bin/.determination-krita-*
-          '' + pkgs.lib.optionalString (!config.ardour) ''
-            rm -f /bin/determination-ardour-*
-            rm -f /bin/.determination-ardour-*
-          '';
+          runAsRoot =
+            ''
+              ${pkgs.dockerTools.shadowSetup}
+            ''
+            + pkgs.lib.optionalString (!config.krita) ''
+              rm -f /bin/determination-krita-*
+              rm -f /bin/.determination-krita-*
+            ''
+            + pkgs.lib.optionalString (!config.ardour) ''
+              rm -f /bin/determination-ardour-*
+              rm -f /bin/.determination-ardour-*
+            '';
           #compressor = "zstd";
           config = {
             Cmd = [ "/bin/bash" ];
@@ -98,7 +106,8 @@
           LC_ALL=C tar --sort=name --format=posix --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime -cf "$out" *
         '';
       };
-    in {
+    in
+    {
       packages.${system} = {
         default = container;
         container = container;
@@ -107,5 +116,6 @@
         tar = pkgs.gnutar;
         zstd = pkgs.zstd;
       };
+      formatter.${system} = pkgsUnstable.nixfmt-rfc-style;
     };
 }
