@@ -8,7 +8,7 @@ let
   version = "3.0.6-determinism0";
 in
 pkgs.stdenv.mkDerivation {
-  name = "zynaddsubfx";
+  pname = "zynaddsubfx";
   inherit version;
   src = pkgs.fetchFromGitHub {
     owner = "white-axe";

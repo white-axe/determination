@@ -8,7 +8,7 @@ let
   version = "5.1.5";
 in
 pkgs.stdenv.mkDerivation {
-  name = "krita";
+  pname = "krita";
   inherit version;
   src = pkgs.fetchurl {
     url = "mirror://kde/stable/krita/${version}/krita-${version}.tar.gz";

@@ -8,7 +8,7 @@ let
   version = "8.4";
 in
 pkgs.stdenv.mkDerivation {
-  name = "ardour";
+  pname = "ardour";
   inherit version;
   src = pkgs.fetchgit {
     url = "https://git.ardour.org/ardour/ardour";

@@ -8,7 +8,7 @@ let
   version = "4.6.0";
 in
 pkgs.stdenv.mkDerivation {
-  name = "libtiff";
+  pname = "libtiff";
   inherit version;
   src = pkgs.fetchFromGitLab {
     owner = "libtiff";

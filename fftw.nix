@@ -8,7 +8,7 @@ let
   version = "3.3.10";
 in
 pkgs.stdenv.mkDerivation {
-  name = "fftw";
+  pname = "fftw";
   inherit version;
   src = pkgs.fetchurl {
     urls = [

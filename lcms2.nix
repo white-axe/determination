@@ -8,7 +8,7 @@ let
   version = "2.16";
 in
 pkgs.stdenv.mkDerivation {
-  name = "lcms2";
+  pname = "lcms2";
   inherit version;
   src = pkgs.fetchurl {
     url = "mirror://sourceforge/lcms/lcms2-${version}.tar.gz";

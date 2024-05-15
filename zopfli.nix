@@ -8,7 +8,7 @@ let
   version = "ccf9f0588d4a4509cb1040310ec122243e670ee6"; # 2024-04-11
 in
 pkgs.stdenv.mkDerivation {
-  name = "zopfli";
+  pname = "zopfli";
   inherit version;
   src = pkgs.fetchFromGitHub {
     owner = "google";

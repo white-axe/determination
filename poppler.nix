@@ -8,7 +8,7 @@ let
   version = "24.02.0";
 in
 pkgs.stdenv.mkDerivation {
-  name = "poppler";
+  pname = "poppler";
   inherit version;
   src = pkgs.fetchurl {
     url = "https://poppler.freedesktop.org/poppler-${version}.tar.xz";

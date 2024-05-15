@@ -8,7 +8,7 @@ let
   version = "0.4.9";
 in
 pkgs.stdenv.mkDerivation {
-  name = "aubio";
+  pname = "aubio";
   inherit version;
   src = pkgs.fetchurl {
     url = "https://aubio.org/pub/aubio-${version}.tar.bz2";
