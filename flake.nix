@@ -88,6 +88,7 @@
             tar -C image -xf image.tar
             rm image.tar
             cd image
+            unset layer_digest_map; declare -A layer_digest_map
             manifest_digests=$(jq -er '.manifests[].digest' < index.json)
             i=0
             for manifest_digest in $manifest_digests; do  # Annotate every manifest
@@ -98,7 +99,6 @@
               config_digest=$(jq -er '.config.digest' < manifest.json)
               config_digest=''${config_digest#*:}
               mv $config_digest config.json
-              unset layer_digest_map; declare -A layer_digest_map
               layer_digests=$(jq -er ".layers | map(select(.mediaType == \"application/vnd.oci.image.layer.v1.tar+zstd\"))[].digest" < manifest.json)
               j=0
               for layer_digest in $layer_digests; do  # Convert every layer from GNU tar format to pax tar format
