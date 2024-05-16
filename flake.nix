@@ -54,7 +54,7 @@
           ];
       };
       container =
-        pkgs.runCommand "container-image-determination"
+        pkgs.runCommand "container-image-determination.tar"
           {
             src = pkgs.dockerTools.buildImage {
               name = "determination";

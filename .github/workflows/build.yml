@@ -40,7 +40,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: container-image-determination
+          name: container-image-determination.tar
           path: container-image-determination.tar
       - name: Prepare release files
         run: cp "${{ steps.attest-artifact.outputs.bundle-path }}" ./container-image-determination.tar.sigstore.json
@@ -189,7 +189,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: closure-determination
+          name: closure-determination.tar.zst
           path: closure-determination.tar.zst
       - name: Prepare release files
         run: |
