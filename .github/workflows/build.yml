@@ -132,13 +132,20 @@ jobs:
         run: |
           nix store gc
           paths=
-          image_derivation="$(nix derivation show | jq -r 'keys_unsorted[0]')"
-          for derivation in $(nix derivation show -r | jq -r 'map_values(select(.env.urls or .env.url)) | keys[]'); do
+          image_derivation="$(nix derivation show | jq -er 'keys_unsorted[0]')"
+          formatter_derivation="$(nix derivation show '.#formatter' | jq -er 'keys_unsorted[0]')"
+          for derivation in $(nix derivation show -r | jq -er 'map_values(select(.env.urls or .env.url)) | keys[]'); do
+            echo -e "\e[96mBuilding source derivation $derivation\e[0m"
+            paths+="$derivation"$'\n'
+            paths+="$(nix build "$derivation^*" --print-out-paths)"$'\n'
+          done
+          for derivation in $(nix derivation show -r '.#formatter' | jq -er 'map_values(select(.env.urls or .env.url)) | keys[]'); do
             echo -e "\e[96mBuilding source derivation $derivation\e[0m"
             paths+="$derivation"$'\n'
             paths+="$(nix build "$derivation^*" --print-out-paths)"$'\n'
           done
           nix copy --to ./closure-input "$image_derivation" --no-check-sigs
+          nix copy --to ./closure-input "$formatter_derivation" --no-check-sigs
           mkdir closure-determination
           mkdir -p closure-determination/nix/store
           sudo mv closure-input/nix/store/* closure-determination/nix/store/

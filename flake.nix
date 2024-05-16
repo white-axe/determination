@@ -19,6 +19,7 @@
       pkgs = import nixpkgs { inherit system; };
       pkgsUnstable = import unstable { inherit system; };
       config = import ./config.nix;
+      formatter = pkgsUnstable.nixfmt-rfc-style;
       raw = pkgs.buildEnv {
         name = "determination";
         paths =
@@ -60,9 +61,7 @@
               tag = "latest";
               copyToRoot = raw;
               runAsRoot =
-                ''
-                  ${pkgs.dockerTools.shadowSetup}
-                ''
+                pkgs.dockerTools.shadowSetup
                 + pkgs.lib.optionalString (!config.krita) ''
                   rm -f /bin/determination-krita-*
                   rm -f /bin/.determination-krita-*
@@ -150,12 +149,11 @@
     {
       packages.${system} = {
         default = container;
-        container = container;
-        raw = raw;
+        inherit container formatter raw;
         skopeo = pkgsUnstable.skopeo;
         tar = pkgs.gnutar;
         zstd = pkgs.zstd;
       };
-      formatter.${system} = pkgsUnstable.nixfmt-rfc-style;
+      formatter.${system} = formatter;
     };
 }
