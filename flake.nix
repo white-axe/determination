@@ -109,24 +109,25 @@
                 rm old-layer.tar.zst
                 echo "Re-encoding layer $j from manifest $i..."
                 bsdtar --format=pax -cf layer.tar @old-layer.tar
-                new_diff_id=$(sha256sum layer.tar | awk '{print $1}')
                 rm old-layer.tar
+                echo "Updating layer info for layer $j in config for manifest $i..."
+                new_diff_id=$(sha256sum layer.tar | awk '{print $1}')
+                jq -c ".rootfs.diff_ids[$j] = \"sha256:$new_diff_id\"" < config.json > config.json.out && mv config.json.out config.json
                 echo "Compressing layer $j from manifest $i..."
                 zstd --ultra -20 layer.tar
                 rm layer.tar
-                echo "Updating config for manifest $i..."
-                jq -c ".rootfs.diff_ids[$j] = \"sha256:$new_diff_id\"" < config.json > config.json.out && mv config.json.out config.json
-                new_config_size=$(wc -c < config.json)
-                new_config_digest=$(sha256sum config.json | awk '{print $1}')
-                mv config.json $new_config_digest
-                echo "Updating manifest $i..."
-                jq -c ".config += { digest: \"sha256:$new_config_digest\", size: $new_config_size }" < manifest.json > manifest.json.out && mv manifest.json.out manifest.json
+                echo "Updating layer info for layer $j in manifest $i..."
                 new_layer_size=$(wc -c < layer.tar.zst)
                 new_layer_digest=$(sha256sum layer.tar.zst | awk '{print $1}')
                 mv layer.tar.zst $new_layer_digest
                 jq -c ".layers[$j] += { digest: \"sha256:$new_layer_digest\", size: $new_layer_size }" < manifest.json > manifest.json.out && mv manifest.json.out manifest.json
                 ((++j))
               done
+              echo "Updating config info in manifest $i..."
+              new_config_size=$(wc -c < config.json)
+              new_config_digest=$(sha256sum config.json | awk '{print $1}')
+              mv config.json $new_config_digest
+              jq -c ".config += { digest: \"sha256:$new_config_digest\", size: $new_config_size }" < manifest.json > manifest.json.out && mv manifest.json.out manifest.json
               echo "Updating index.json..."
               new_manifest_size=$(wc -c < manifest.json)
               new_manifest_digest=$(sha256sum manifest.json | awk '{print $1}')
