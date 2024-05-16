@@ -84,7 +84,7 @@
             ];
           }
           ''
-            skopeo --debug --insecure-policy --tmpdir=/build copy -f oci --dest-compress-format zstd docker-archive:"$src" oci-archive:image.tar
+            skopeo --debug --insecure-policy --tmpdir="$TMPDIR" copy -f oci --dest-compress-format zstd docker-archive:"$src" oci-archive:image.tar
             mkdir image
             tar -C image -xf image.tar
             rm image.tar
@@ -116,7 +116,7 @@
                   new_diff_id=$(sha256sum layer.tar | awk '{print $1}')
                   jq -c ".rootfs.diff_ids[$j] = \"sha256:$new_diff_id\"" < config.json > config.json.out && mv config.json.out config.json
                   echo "Compressing layer $j from manifest $i..."
-                  zstd --ultra -20 layer.tar
+                  zstd -T$NIX_BUILD_CORES --ultra -20 layer.tar
                   rm layer.tar
                   echo "Updating layer info for layer $j in manifest $i..."
                   new_layer_size=$(wc -c < layer.tar.zst)
@@ -144,8 +144,6 @@
               jq -c ".manifests[$i] += { digest: \"sha256:$new_manifest_digest\", size: $new_manifest_size }" < index.json > index.json.out && mv index.json.out index.json
               ((++i))
             done
-            cd ..
-            cd image
             LC_ALL=C tar --sort=name --format=posix --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime -cf "$out" *
           '';
     in
