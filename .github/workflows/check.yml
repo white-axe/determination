@@ -32,6 +32,6 @@ jobs:
           git status
           if [[ $(git status --porcelain) ]]; then
             git diff
-            echo -e "Your code is not formatted correctly; please run \`nix --experimental-features 'nix-command flakes' fmt\`"
+            echo -e "::error title=nix fmt::Your code is not formatted correctly; please run \`nix --experimental-features 'nix-command flakes' fmt\`"
             exit 1
           fi
