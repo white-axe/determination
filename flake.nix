@@ -99,27 +99,35 @@
               config_digest=$(jq -er '.config.digest' < manifest.json)
               config_digest=''${config_digest#*:}
               mv $config_digest config.json
+              unset layer_digest_map; declare -A layer_digest_map
               layer_digests=$(jq -er ".layers | map(select(.mediaType == \"application/vnd.oci.image.layer.v1.tar+zstd\"))[].digest" < manifest.json)
               j=0
               for layer_digest in $layer_digests; do  # Convert every layer from GNU tar format to pax tar format
-                echo "Decompressing layer $j from manifest $i..."
                 layer_digest=''${layer_digest#*:}
-                mv $layer_digest old-layer.tar.zst
-                zstd -d old-layer.tar.zst
-                rm old-layer.tar.zst
-                echo "Re-encoding layer $j from manifest $i..."
-                bsdtar --format=pax -cf layer.tar @old-layer.tar
-                rm old-layer.tar
-                echo "Updating layer info for layer $j in config for manifest $i..."
-                new_diff_id=$(sha256sum layer.tar | awk '{print $1}')
-                jq -c ".rootfs.diff_ids[$j] = \"sha256:$new_diff_id\"" < config.json > config.json.out && mv config.json.out config.json
-                echo "Compressing layer $j from manifest $i..."
-                zstd --ultra -20 layer.tar
-                rm layer.tar
-                echo "Updating layer info for layer $j in manifest $i..."
-                new_layer_size=$(wc -c < layer.tar.zst)
-                new_layer_digest=$(sha256sum layer.tar.zst | awk '{print $1}')
-                mv layer.tar.zst $new_layer_digest
+                if [ -z "''${layer_digest_map[$layer_digest]}" ]; then
+                  echo "Decompressing layer $j from manifest $i..."
+                  mv $layer_digest old-layer.tar.zst
+                  zstd -d old-layer.tar.zst
+                  rm old-layer.tar.zst
+                  echo "Re-encoding layer $j from manifest $i..."
+                  bsdtar --format=pax -cf layer.tar @old-layer.tar
+                  rm old-layer.tar
+                  echo "Updating layer info for layer $j in config for manifest $i..."
+                  new_diff_id=$(sha256sum layer.tar | awk '{print $1}')
+                  jq -c ".rootfs.diff_ids[$j] = \"sha256:$new_diff_id\"" < config.json > config.json.out && mv config.json.out config.json
+                  echo "Compressing layer $j from manifest $i..."
+                  zstd --ultra -20 layer.tar
+                  rm layer.tar
+                  echo "Updating layer info for layer $j in manifest $i..."
+                  new_layer_size=$(wc -c < layer.tar.zst)
+                  new_layer_digest=$(sha256sum layer.tar.zst | awk '{print $1}')
+                  mv layer.tar.zst $new_layer_digest
+                  layer_digest_map[$layer_digest]="$new_layer_digest-$new_layer_size"
+                else
+                  echo "Updating layer info for layer $j in manifest $i..."
+                  new_layer_size=''${layer_digest_map[$layer_digest]#*-}
+                  new_layer_digest=''${layer_digest_map[$layer_digest]%-*}
+                fi
                 jq -c ".layers[$j] += { digest: \"sha256:$new_layer_digest\", size: $new_layer_size }" < manifest.json > manifest.json.out && mv manifest.json.out manifest.json
                 ((++j))
               done
