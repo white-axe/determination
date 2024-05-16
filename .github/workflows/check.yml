@@ -31,8 +31,7 @@ jobs:
         run: |
           git status
           if [[ $(git status --porcelain) ]]; then
-            echo ''
             git diff
-            echo -e "\nYour code is not formatted correctly; please run \`nix --experimental-features 'nix-command flakes' fmt\`"
+            echo -e "Your code is not formatted correctly; please run \`nix --experimental-features 'nix-command flakes' fmt\`"
             exit 1
           fi
