@@ -117,7 +117,7 @@
             echo './nix' >> layerFiles
             echo './nix/store' >> layerFiles
             comm <(sort -n baseFiles|uniq) <(sort -n layerFiles|uniq|grep -v ${layer}) -1 -3 > newFiles
-            LC_ALL=C tar --hard-dereference --sort=name --format=posix --mtime="@$SOURCE_DATE_EPOCH"  --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime --no-recursion --verbatim-files-from --files-from newFiles -rpf layer.tar
+            LC_ALL=C tar --hard-dereference --sort=name --format=posix --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime --no-recursion --verbatim-files-from --files-from newFiles -rpf layer.tar
             chmod -R 755 nix/
             rm -r nix/
             rm newFiles
