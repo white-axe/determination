@@ -5,21 +5,15 @@
 # the Free Software Foundation, version 3.
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/release-23.11";
-    unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/staging-next";
   };
   outputs =
-    {
-      self,
-      nixpkgs,
-      unstable,
-    }:
+    { self, nixpkgs }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
-      pkgsUnstable = import unstable { inherit system; };
       config = import ./config.nix;
-      formatter = pkgsUnstable.nixfmt-rfc-style;
+      formatter = pkgs.nixfmt-rfc-style;
       raw = pkgs.buildEnv {
         name = "determination";
         paths =
@@ -70,7 +64,7 @@
                   rm -f /bin/determination-ardour-*
                   rm -f /bin/.determination-ardour-*
                 '';
-              #compressor = "zstd";
+              compressor = "zstd";
               config = {
                 Cmd = [ "/bin/bash" ];
               };
@@ -150,7 +144,7 @@
       packages.${system} = {
         default = container;
         inherit container formatter raw;
-        skopeo = pkgsUnstable.skopeo;
+        skopeo = pkgs.skopeo;
         tar = pkgs.gnutar;
         zstd = pkgs.zstd;
       };

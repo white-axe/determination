@@ -47,7 +47,7 @@ pkgs.stdenv.mkDerivation {
     pkgs.libsForQt5.ki18n
     pkgs.libsForQt5.kitemmodels
     pkgs.libsForQt5.kitemviews
-    #pkgs.kseexpr
+    pkgs.kseexpr
     pkgs.libsForQt5.kwidgetsaddons
     pkgs.libsForQt5.kwindowsystem
     pkgs.openexr
