@@ -25,6 +25,17 @@
       };
       formatter = pkgsUnstable.nixfmt-rfc-style;
       image = builder.buildImage {
+        architecture = "amd64";
+        os = "linux";
+        annotations = {
+          "org.opencontainers.image.source" = "https://github.com/white-axe/determination";
+          "org.opencontainers.image.licenses" = "GPL-3.0-only";
+          "org.opencontainers.image.title" = "Determination";
+          "org.opencontainers.image.description" = "Deterministic rendering environment for white-axe's music and art";
+        };
+        config = {
+          Cmd = [ "/bin/bash" ];
+        };
         layers =
           [
             {
@@ -88,15 +99,6 @@
               pathsToLink = [ "/root/.config/ardour8" ];
             }
           ];
-        config = {
-          Cmd = [ "/bin/bash" ];
-        };
-        annotations = {
-          "org.opencontainers.image.source" = "https://github.com/white-axe/determination";
-          "org.opencontainers.image.licenses" = "GPL-3.0-only";
-          "org.opencontainers.image.title" = "Determination";
-          "org.opencontainers.image.description" = "Deterministic rendering environment for white-axe's music and art";
-        };
       };
     in
     {
