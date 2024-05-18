@@ -9,7 +9,7 @@
 
 --- a/libs/resources/KoResourceBundle.cpp
 +++ b/libs/resources/KoResourceBundle.cpp
-@@ -512,7 +512,7 @@ bool KoResourceBundle::loadResource(KoResourceSP resource)
+@@ -517,7 +517,7 @@ bool KoResourceBundle::loadResource(KoResourceSP resource)
  
      if (!resource->loadFromDevice(resourceStore->device(),
                                    KisGlobalResourcesInterface::instance())) {

@@ -1,0 +1,32 @@
+# Determination - Deterministic rendering environment for music and art
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3.
+
+# Krita's test for whether libmypaint is present seems to be broken. Let's
+# disable it.
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1007,13 +1007,13 @@ endif()
+ macro_bool_to_01(Mlt7_FOUND HAVE_MLT)
+ configure_file(config-mlt.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-mlt.h)
+ 
+-find_package(LibMyPaint 1.4.0)
+-set_package_properties(LibMyPaint PROPERTIES
+-    DESCRIPTION "MyPaint brush engine API for C/C++"
+-    TYPE OPTIONAL
+-    PURPOSE "Required for the MyPaint brush engine")
+-macro_bool_to_01(LibMyPaint_FOUND HAVE_LIBMYPAINT)
+-configure_file(config-mypaint.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-mypaint.h )
++#find_package(LibMyPaint 1.4.0)
++#set_package_properties(LibMyPaint PROPERTIES
++#    DESCRIPTION "MyPaint brush engine API for C/C++"
++#    TYPE OPTIONAL
++#    PURPOSE "Required for the MyPaint brush engine")
++#macro_bool_to_01(LibMyPaint_FOUND HAVE_LIBMYPAINT)
++#configure_file(config-mypaint.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-mypaint.h )
+ 
+ ##
+ ## Look for OpenGL

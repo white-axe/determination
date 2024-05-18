@@ -5,21 +5,17 @@
 # the Free Software Foundation, version 3.
 { pkgs }:
 let
-  version = "5.1.5";
+  version = "5.2.2";
 in
 pkgs.stdenv.mkDerivation {
   pname = "krita";
   inherit version;
   src = pkgs.fetchurl {
     url = "mirror://kde/stable/krita/${version}/krita-${version}.tar.gz";
-    hash = "sha256-HHdevvD3mammt0RAw9kGq5E8J1QbF37WIXBN5xTppNM=";
+    hash = "sha256-wdLko219iqKW0CHlK+STzGedP+Xoqk/BPENNM+gVTOI=";
   };
   patches = [
-    (pkgs.fetchpatch {
-      name = "exiv2-0.28.patch";
-      url = "https://gitlab.archlinux.org/archlinux/packaging/packages/krita/-/raw/acd9a818660e86b14a66fceac295c2bab318c671/exiv2-0.28.patch";
-      hash = "sha256-iD2pyid513ThJVeotUlVDrwYANofnEiZmWINNUm/saw=";
-    })
+    ./krita-disable-libmypaint.patch
     ./krita-disable-plugins.patch
     ./krita-disable-qt-quick.patch
     ./krita-disable-resource-bundle-warning.patch
@@ -36,10 +32,10 @@ pkgs.stdenv.mkDerivation {
     pkgs.boost
     pkgs.eigen
     pkgs.exiv2
+    pkgs.fribidi
     pkgs.gsl
+    pkgs.harfbuzz
     pkgs.immer
-    (pkgs.callPackage ./lcms2.nix { })
-    (pkgs.callPackage ./libtiff.nix { })
     pkgs.libsForQt5.kconfig
     pkgs.libsForQt5.kcompletion
     pkgs.libsForQt5.kcoreaddons
@@ -50,11 +46,16 @@ pkgs.stdenv.mkDerivation {
     pkgs.kseexpr
     pkgs.libsForQt5.kwidgetsaddons
     pkgs.libsForQt5.kwindowsystem
+    pkgs.lager
+    (pkgs.callPackage ./lcms2.nix { })
+    (pkgs.callPackage ./libtiff.nix { })
+    pkgs.libunibreak
     pkgs.openexr
     (pkgs.callPackage ./poppler.nix { })
     pkgs.libsForQt5.qtbase
     pkgs.libsForQt5.qtx11extras
     pkgs.libsForQt5.quazip
+    pkgs.zug
   ];
   cmakeBuildType = "RelWithDebInfo";
   cmakeFlags = [
