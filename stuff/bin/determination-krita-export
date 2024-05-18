@@ -22,6 +22,7 @@ usage() {
   >&2 echo '                (default: ./export relative to the input file)'
   >&2 echo '    -m name     Filename of the exported PNG file without extension'
   >&2 echo '                (default: master)'
+  >&2 echo '    -h, --help  Show a help message'
   >&2 echo ''
 }
 
