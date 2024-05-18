@@ -24,6 +24,7 @@ usage() {
   >&2 echo '                (default: master)'
   >&2 echo '    -t name     Filename prefix of the exported track FLAC files'
   >&2 echo '                (default: track)'
+  >&2 echo '    -h, --help  Show a help message'
   >&2 echo ''
 }
 
