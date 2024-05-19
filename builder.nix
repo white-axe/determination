@@ -147,8 +147,7 @@ in
           layer_diff_id=$(< $layer/diffId)
           layer_digest=$(sha256sum $layer/layer.tar.zst | awk '{print $1}')
           layer_size=$(wc -c < $layer/layer.tar.zst)
-          cp $layer/layer.tar.zst $layer_digest
-          chmod 644 $layer_digest
+          ln -s $layer/layer.tar.zst $layer_digest
           jq -c ".rootfs.diff_ids += [\"sha256:$layer_diff_id\"]" config.json > config.json.out && mv config.json.out config.json
           jq -c ".layers += [{ mediaType: \"application/vnd.oci.image.layer.v1.tar+zstd\", digest: \"sha256:$layer_digest\", size: $layer_size }]" manifest.json > manifest.json.out && mv manifest.json.out manifest.json
         done < layerRefs
@@ -178,7 +177,7 @@ in
         cat index.json
 
         echo 'Archiving...'
-        tar --sort=name --format=posix --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime -cf $out *
+        tar --sort=name --format=posix --mode='u+rwX,a+rX' --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime -chf $out *
 
         echo 'Done!'
       '';
