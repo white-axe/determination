@@ -28,6 +28,7 @@
           "org.opencontainers.image.description" = "Deterministic rendering environment for white-axe's music and art";
         };
         config = {
+          Env = [ "PATH=/bin" ];
           Cmd = [ "/bin/bash" ];
         };
         layers =
