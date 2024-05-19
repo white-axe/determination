@@ -51,7 +51,7 @@
               name = "tools";
               paths =
                 pkgs.lib.optionals config.exiftool [ pkgs.exiftool ]
-                ++ pkgs.lib.optionals config.ffmpeg [ pkgs.ffmpeg ]
+                ++ pkgs.lib.optionals config.ffmpeg [ pkgs.ffmpeg-headless ]
                 ++ pkgs.lib.optionals config.flac [ pkgs.flac ]
                 ++ pkgs.lib.optionals config.zopfli [ (pkgs.callPackage ./zopfli.nix { }) ];
             }
@@ -70,7 +70,7 @@
               name = "ardour";
               paths = [
                 (pkgs.callPackage ./ardour.nix { })
-                pkgs.ffmpeg
+                pkgs.ffmpeg-headless
                 pkgs.flac
                 pkgs.gawk
               ];
