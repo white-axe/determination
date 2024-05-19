@@ -6,6 +6,7 @@
 # the Free Software Foundation, version 3.
 
 set -eEo pipefail
+export PATH="/bin:$PATH"
 
 help () {
   >&2 echo ''
