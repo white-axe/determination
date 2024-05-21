@@ -27,15 +27,15 @@
       image = builder.buildImage {
         architecture = "amd64";
         os = "linux";
+        annotations = {
+          "org.opencontainers.image.source" = "https://github.com/white-axe/determination";
+          "org.opencontainers.image.licenses" = "GPL-3.0-only";
+          "org.opencontainers.image.title" = "Determination";
+          "org.opencontainers.image.description" = "Deterministic rendering environment for white-axe's music and art";
+        };
         config = {
           Env = [ "PATH=/bin" ];
           Cmd = [ "/bin/bash" ];
-          Labels = {
-            "org.opencontainers.image.source" = "https://github.com/white-axe/determination";
-            "org.opencontainers.image.licenses" = "GPL-3.0-only";
-            "org.opencontainers.image.title" = "Determination";
-            "org.opencontainers.image.description" = "Deterministic rendering environment for white-axe's music and art";
-          };
         };
         layers =
           [
