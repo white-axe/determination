@@ -129,7 +129,7 @@ in
         mkdir -p blobs/sha256
         cd blobs/sha256
 
-        jq -c "{ architecture: \"${architecture}\", os: \"${os}\", config: ., rootfs: { type: \"layers\", diff_ids: [] } }" $config > config.json
+        jq -c "{ architecture: \"${architecture}\", os: \"${os}\", config: ., rootfs: { type: \"layers\", diff_ids: [] } }" <(jq --rawfile annotations $annotations -c ".Labels += (\$annotations | fromjson)" $config) > config.json
         jq -c "{ schemaVersion: 2, mediaType: \"application/vnd.oci.image.manifest.v1+json\", config: { mediaType: \"application/vnd.oci.image.config.v1+json\" }, layers: [], annotations: . }" $annotations > manifest.json
 
         touch layerRefs
