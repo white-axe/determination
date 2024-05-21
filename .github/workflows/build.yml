@@ -69,7 +69,7 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo '### Configuration' >> $GITHUB_STEP_SUMMARY
           echo '```json' >> $GITHUB_STEP_SUMMARY
-          ./skopeo inspect --config oci-archive:container-image-determination.tar | jq -M >> $GITHUB_STEP_SUMMARY
+          ./skopeo inspect --config --raw oci-archive:container-image-determination.tar | jq -M >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
       - name: Upload to ghcr.io
         id: upload-ghcr
