@@ -113,14 +113,12 @@ in
       architecture,
       os,
       config,
-      annotations,
     }:
     pkgs.runCommand "container-image-${imageName}.tar"
       {
         nativeBuildInputs = [ pkgs.jq ];
         layers = pkgs.lib.foldl cookLayer nul (builtins.map mkLayer layers);
         config = pkgs.writeText "${imageName}-config.json" (builtins.toJSON config);
-        annotations = pkgs.writeText "${imageName}-annotations.json" (builtins.toJSON annotations);
       }
       ''
         mkdir image
@@ -130,7 +128,7 @@ in
         cd blobs/sha256
 
         jq -c "{ architecture: \"${architecture}\", os: \"${os}\", config: ., rootfs: { type: \"layers\", diff_ids: [] } }" $config > config.json
-        jq -c "{ schemaVersion: 2, mediaType: \"application/vnd.oci.image.manifest.v1+json\", config: { mediaType: \"application/vnd.oci.image.config.v1+json\" }, layers: [], annotations: . }" $annotations > manifest.json
+        echo '{}' | jq -c "{ schemaVersion: 2, mediaType: \"application/vnd.oci.image.manifest.v1+json\", config: { mediaType: \"application/vnd.oci.image.config.v1+json\" }, layers: [] }" > manifest.json
 
         touch layerRefs
         if [[ -e $layers/prevOutput ]]; then
