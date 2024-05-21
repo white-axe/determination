@@ -73,7 +73,6 @@
                 (pkgs.callPackage ./ardour.nix { })
                 pkgs.ffmpeg-headless
                 pkgs.flac
-                pkgs.gawk
               ];
             }
           ]
