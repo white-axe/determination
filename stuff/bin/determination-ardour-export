@@ -68,7 +68,7 @@ else
   output="$project/export"
 fi
 
-n="$(.determination-ardour-ntracks.lua | tail -n 1 | awk '{print $NF}')"
+n="$(.determination-ardour-ntracks.lua | tail -n 1)"
 j='0'
 
 for i in $(seq "$n"); do
