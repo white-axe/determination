@@ -5,7 +5,7 @@
 # the Free Software Foundation, version 3.
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/staging-next";
+    nixpkgs.url = "github:NixOS/nixpkgs/release-24.05";
   };
   outputs =
     { self, nixpkgs }:
