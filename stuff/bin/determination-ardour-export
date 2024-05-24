@@ -56,7 +56,7 @@ session="$(basename "$input" .ardour)"
 
 >&2 echo -e "\e[96mExporting session \"$input\"\e[0m"
 
-export LV2_PATH="$LV2_PATH:/lib/lv2"
+export LV2_PATH="/lib/lv2:$LV2_PATH"
 export DETERMINATION_ARDOUR_PROJECT="$project"
 export DETERMINATION_ARDOUR_SESSION="$session"
 export DETERMINATION_ARDOUR_TRACK_PREFIX="$track"
