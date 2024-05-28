@@ -23,7 +23,7 @@
              avx_sources = [ 'sse_functions_avx_linux.cc' ]
 --- a/wscript
 +++ b/wscript
-@@ -531,7 +531,7 @@ int main() { return 0; }''',
+@@ -534,7 +534,7 @@ int main() { return 0; }''',
          #
          compiler_flags.append ('-U__STRICT_ANSI__')
  
@@ -32,7 +32,7 @@
          if conf.env['build_target'] == 'armhf' or conf.env['build_target'] == 'aarch64':
              conf.define('ARM_NEON_SUPPORT', 1)
          elif conf.env['build_target'] == 'mingw':
-@@ -598,7 +598,7 @@ int main() { return 0; }''',
+@@ -601,7 +601,7 @@ int main() { return 0; }''',
          if not (opt.arm64 or conf.env['build_target'] == 'armhf' and conf.env['build_target'] == 'aarch64'):
              compiler_flags.append ("-DARCH_X86")
  
@@ -41,7 +41,7 @@
  
              #
              # determine processor flags via /proc/cpuinfo
-@@ -621,10 +621,10 @@ int main() { return 0; }''',
+@@ -624,10 +624,10 @@ int main() { return 0; }''',
              elif cpu == "i686":
                  compiler_flags.append ("-march=i686")
  
@@ -54,7 +54,7 @@
              if (re.search ("(x86_64|AMD64)", cpu) is not None):
                  # on Windows sse is supported by 64 bit platforms only
                  build_host_supports_sse = True
-@@ -1361,7 +1361,7 @@ int main () { __int128 x = 0; return 0; }
+@@ -1366,7 +1366,7 @@ int main () { __int128 x = 0; return 0; }
      if not opts.no_phone_home:
          conf.define('PHONE_HOME', 1)
          conf.env['PHONE_HOME'] = True
@@ -63,7 +63,7 @@
          conf.env['FPU_OPTIMIZATION'] = True
      if opts.freedesktop:
          conf.env['FREEDESKTOP'] = True
-@@ -1560,7 +1560,7 @@ const char* const ardour_config_info = "\\n\\
+@@ -1565,7 +1565,7 @@ const char* const ardour_config_info = "\\n\\
      write_config_text('Denormal exceptions',   conf.is_defined('DEBUG_DENORMAL_EXCEPTION'))
      write_config_text('Dr. Mingw',             conf.is_defined('HAVE_DRMINGW'))
      write_config_text('FLAC',                  conf.is_defined('HAVE_FLAC'))

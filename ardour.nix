@@ -5,7 +5,7 @@
 # the Free Software Foundation, version 3.
 { pkgs }:
 let
-  version = "8.4";
+  version = "8.6";
 in
 pkgs.stdenv.mkDerivation {
   pname = "ardour";
@@ -13,7 +13,7 @@ pkgs.stdenv.mkDerivation {
   src = pkgs.fetchgit {
     url = "https://git.ardour.org/ardour/ardour";
     rev = version;
-    hash = "sha256-6qx/elkj4Kb4YK1JZG/S036WdUO7wEE6/yf4pZQP8J0=";
+    hash = "sha256-sMp24tjtX8fZJWc7dvb+9e6pEflT4ugoOZjDis6/3nM=";
   };
   patches = [
     ./ardour-disable-fpu-optimization.patch
