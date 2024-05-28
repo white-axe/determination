@@ -29,9 +29,7 @@ jobs:
       - name: Install Nix
         uses: cachix/install-nix-action@v27
       - name: Build
-        run: |
-          nix build -L
-          mv result container-image-determination.tar
+        run: nix build -Lo container-image-determination.tar
       - name: Attest artifact
         id: attest-artifact
         uses: actions/attest-build-provenance@v1
