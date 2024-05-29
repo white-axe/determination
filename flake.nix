@@ -16,7 +16,20 @@
     }:
     let
       system = "x86_64-linux";
-      pkgs = import nixpkgs { inherit system; };
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [
+          (final: prev: {
+            vmTools = prev.vmTools // {
+              runInLinuxVM =
+                drv:
+                prev.lib.overrideDerivation (prev.vmTools.runInLinuxVM drv) (oldAttrs: {
+                  requiredSystemFeatures = prev.lib.remove "kvm" oldAttrs.requiredSystemFeatures;
+                });
+            };
+          })
+        ];
+      };
       pkgsUnstable = import unstable { inherit system; };
       config = import ./config.nix;
       builder = import ./builder.nix {
