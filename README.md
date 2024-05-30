@@ -30,7 +30,7 @@ These are the instructions for building the container image from the source code
 
 The image is designed to build reproducibly: every time you build the image, regardless of the computer it's built on or when it's built, the resulting image tar archive should be identical.
 
-Install the [Nix package manager](https://nixos.org) on an x86-64 Linux computer and run the following commands to build the container image. The minimum supported verson of Nix is 2.8.0. You must have [sandboxing](https://nixos.wiki/wiki/Nix_package_manager#Sandboxing) enabled or the build will not be reproducible. If you don't have an x86-64 computer, you can use [QEMU](https://www.qemu.org) to emulate an x86-64 Linux system and install Nix in there without compromising build reproducibility.
+Install the [Nix package manager](https://nixos.org) on an x86-64 Linux computer and run the following commands to build the container image. The minimum supported version of Nix is 2.8.0. You must have [sandboxing](https://nixos.wiki/wiki/Nix_package_manager#Sandboxing) enabled or the build will not be reproducible. If you don't have an x86-64 computer, you can use [QEMU](https://www.qemu.org) to emulate an x86-64 Linux system and install Nix in there without compromising build reproducibility.
 
 ```
 git clone https://github.com/white-axe/determination
