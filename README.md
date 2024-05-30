@@ -2,7 +2,7 @@
 
 If you're a software developer, you may have heard of reproducible builds. I think it's important to consider extending binary reproducibility to things other than software.
 
-This is an [OCI container image](https://opencontainers.org) that can reproducibly render my music and art from the project files. Every time you use this container image to render my music and art, even on different computers, the output files should be the same. Please make sure you run it on a computer with an x86-64 CPU, since floating-point arithmetic isn't portable across CPU architectures!
+This is an [OCI container image](https://opencontainers.org) that can reproducibly render my music and art from the project files. Every time you use this container image to render my music and art, even on different computers, the output files should be the same. The image is for x86-64 computers, but it should be runnable on other architectures using [QEMU](https://www.qemu.org) without affecting reproducibility of the output files.
 
 It comes with the following software, slimmed down and compiled without floating-point SIMD optimizations so that they behave exactly the same on most x86-64 CPUs.
 
@@ -28,7 +28,9 @@ Inside of the container, the command `determination-ardour-export` is provided f
 
 These are the instructions for building the container image from the source code in this repository. You don't need to do this if you just want to use the container image.
 
-Install the [Nix package manager](https://nixos.org) on an x86-64 Linux computer and run the following commands to build the container image. Docker isn't required to be installed to build the image.
+The image is designed to build reproducibly: every time you build the image, regardless of the computer it's built on or when it's built, the resulting image tar archive should be identical.
+
+Install the [Nix package manager](https://nixos.org) on an x86-64 Linux computer and run the following commands to build the container image. The minimum supported verson of Nix is 2.8.0. You must have [sandboxing](https://nixos.wiki/wiki/Nix_package_manager#Sandboxing) enabled or the build will not be reproducible. If you don't have an x86-64 computer, you can use [QEMU](https://www.qemu.org) to emulate an x86-64 Linux system and install Nix in there without compromising build reproducibility.
 
 ```
 git clone https://github.com/white-axe/determination
@@ -38,7 +40,7 @@ nix --experimental-features 'nix-command flakes' build
 
 Feel free also to edit config.nix before running the `nix` command to exclude components from the image that you don't need.
 
-This creates a tarball named "result" with no file extension. Import it into Podman using `podman load -i result` on a computer that has Podman installed. To import it into Docker, install [Skopeo](https://github.com/containers/skopeo) and then run `skopeo copy oci-archive:result docker-archive:result-converted` to convert the tarball to Docker's format before importing it with `docker load -i result-converted`. You may need to run the `podman load` or `docker load` command as root or administrator.
+This creates an uncompressed tar archive named "result" with no file extension. Import it into Podman using `podman load -i result` on a computer that has Podman installed. To import it into Docker, install [Skopeo](https://github.com/containers/skopeo) and then run `skopeo copy oci-archive:result docker-archive:result-converted` to convert the tar archive to Docker's format before importing it with `docker load -i result-converted`. You may need to run the `podman load` or `docker load` command as root or administrator.
 
 If you modify the contents of this repository, keep in mind that Nix ignores untracked files in Git, so always use `git add` to add untracked files before building.
 
