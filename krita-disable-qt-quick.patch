@@ -8,7 +8,7 @@
 
 --- a/libs/CMakeLists.txt
 +++ b/libs/CMakeLists.txt
-@@ -15,9 +15,9 @@ add_subdirectory( image )
+@@ -18,9 +18,9 @@ add_subdirectory( image )
  add_subdirectory( ui )
  add_subdirectory( impex )
  add_subdirectory( libkis )

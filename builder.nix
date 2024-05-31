@@ -46,7 +46,7 @@ let
           pkgs.libarchive
           pkgs.zstd
         ];
-        closure = pkgs.writeReferencesToFile layer;
+        closure = pkgs.writeClosure [ layer ];
       }
       ''
         ls_tar() {

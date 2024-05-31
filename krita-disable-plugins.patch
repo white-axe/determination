@@ -9,10 +9,7 @@
 
 --- a/plugins/CMakeLists.txt
 +++ b/plugins/CMakeLists.txt
-@@ -11,19 +11,19 @@ include_directories(SYSTEM
-     ${Vc_INCLUDE_DIR}
- )
- 
+@@ -1,16 +1,16 @@
 -add_subdirectory( assistants )
 +#add_subdirectory( assistants )
  add_subdirectory( color )
@@ -42,7 +39,7 @@
 +#endif()
 --- a/plugins/impex/CMakeLists.txt
 +++ b/plugins/impex/CMakeLists.txt
-@@ -43,7 +43,7 @@ add_subdirectory(psd)
+@@ -39,7 +39,7 @@ add_subdirectory(psd)
  add_subdirectory(qml)
  add_subdirectory(tga)
  add_subdirectory(heightmap)

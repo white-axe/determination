@@ -5,15 +5,10 @@
 # the Free Software Foundation, version 3.
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/release-23.11";
-    unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/release-24.05";
   };
   outputs =
-    {
-      self,
-      nixpkgs,
-      unstable,
-    }:
+    { self, nixpkgs }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -30,13 +25,12 @@
           })
         ];
       };
-      pkgsUnstable = import unstable { inherit system; };
       config = import ./config.nix;
       builder = import ./builder.nix {
         inherit pkgs;
         imageName = "determination";
       };
-      formatter = pkgsUnstable.nixfmt-rfc-style;
+      formatter = pkgs.nixfmt-rfc-style;
       image = builder.buildImage {
         architecture = "amd64";
         os = "linux";
@@ -119,7 +113,7 @@
       packages.${system} = {
         default = image;
         inherit image formatter;
-        skopeo = pkgsUnstable.skopeo;
+        skopeo = pkgs.skopeo;
         tar = pkgs.gnutar;
         zstd = pkgs.zstd;
       };
