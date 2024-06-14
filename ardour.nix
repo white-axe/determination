@@ -19,6 +19,7 @@ pkgs.stdenv.mkDerivation {
     ./ardour-disable-fpu-optimization.patch
     ./ardour-disable-gui.patch
     ./ardour-disable-timestamp-warning.patch
+    ./ardour-remove-export-presets.patch
   ];
   nativeBuildInputs = [
     pkgs.itstool
