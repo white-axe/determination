@@ -47,40 +47,42 @@ let
           pkgs.zstd
         ];
         closure = pkgs.writeClosure [ layer ];
+        layerName = name;
+        inherit layer nul prevOutput;
       }
       ''
         ls_tar() {
-          for f in $(tar -tf $1 | xargs realpath -ms --relative-to=.); do
+          tar -tf "$1" | xargs -d '\n' -n 1 realpath -ms --relative-to=. | while read f; do
             if [[ "$f" != "." ]]; then
               echo "/$f"
             fi
           done
         }
 
-        mkdir $out
-        echo ${name} > $out/name
-        if [[ ${prevOutput} != ${nul} ]]; then
-          ln -s ${prevOutput} $out/prevOutput
+        mkdir "$out"
+        echo "$layerName" > "$out/name"
+        if [[ "$prevOutput" != "$nul" ]]; then
+          ln -s "$prevOutput" "$out/prevOutput"
         fi
 
         echo 'Converting layer to pax format...'
-        bsdtar --format=pax -cf layer.tar @${layer}/layer.tar
+        bsdtar --format=pax -cf layer.tar @"$layer/layer.tar"
 
         echo 'Copying layer closure to layer...'
-        if [[ ${prevOutput} != ${nul} ]]; then
-          cp ${prevOutput}/files baseFiles
+        if [[ "$prevOutput" != "$nul" ]]; then
+          cp "$prevOutput/files" baseFiles
           chmod 644 baseFiles
         fi
         ls_tar layer.tar >> baseFiles
-        for dep in $(< $closure); do
+        while read dep; do
           find "$dep" >> layerFiles
-        done
+        done < "$closure"
         mkdir nix
         mkdir nix/store
         chmod -R 555 nix/
         echo './nix' >> layerFiles
         echo './nix/store' >> layerFiles
-        comm <(sort -n baseFiles | uniq) <(sort -n layerFiles | uniq | grep -v ${layer}) -1 -3 > newFiles
+        comm <(sort -n baseFiles | uniq) <(sort -n layerFiles | uniq | grep -vF "$layer") -1 -3 > newFiles
         tar --hard-dereference --sort=name --format=posix --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime --no-recursion --verbatim-files-from --files-from newFiles -rpf layer.tar
         chmod -R 755 nix/
         rm -r nix/
@@ -89,9 +91,9 @@ let
         layer_diff_id=$(sha256sum layer.tar | awk '{print $1}')
         echo "Layer DiffID: sha256:$layer_diff_id"
         echo "Layer decompressed size: $(wc -c < layer.tar)"
-        echo $layer_diff_id > $out/diffId
+        echo $layer_diff_id > "$out/diffId"
         ls_tar layer.tar >> baseFiles
-        sort -n baseFiles | uniq > $out/files
+        sort -n baseFiles | uniq > "$out/files"
         rm baseFiles
 
         echo "Compressing layer with \`zstd -T$NIX_BUILD_CORES --ultra -20 layer.tar\`..."
@@ -101,7 +103,7 @@ let
         echo "Layer digest: sha256:$layer_digest"
         layer_size=$(wc -c < layer.tar.zst)
         echo "Layer size: $layer_size"
-        mv layer.tar.zst $out/
+        mv layer.tar.zst "$out/"
 
         echo 'Done!'
       '';
@@ -121,6 +123,7 @@ in
         layers = pkgs.lib.foldl cookLayer nul (builtins.map mkLayer layers);
         config = pkgs.writeText "${imageName}-config.json" (builtins.toJSON config);
         annotations = pkgs.writeText "${imageName}-annotations.json" (builtins.toJSON annotations);
+        inherit architecture os;
       }
       ''
         mkdir image
@@ -129,25 +132,25 @@ in
         mkdir -p blobs/sha256
         cd blobs/sha256
 
-        jq -c "{ architecture: \"${architecture}\", os: \"${os}\", config: ., rootfs: { type: \"layers\", diff_ids: [] } }" <(jq --rawfile annotations $annotations -c ".Labels += (\$annotations | fromjson)" $config) > config.json
-        jq -c "{ schemaVersion: 2, mediaType: \"application/vnd.oci.image.manifest.v1+json\", config: { mediaType: \"application/vnd.oci.image.config.v1+json\" }, layers: [], annotations: . }" $annotations > manifest.json
+        jq --arg architecture "$architecture" --arg os "$os" -c "{ architecture: \$architecture, os: \$os, config: ., rootfs: { type: \"layers\", diff_ids: [] } }" <(jq --rawfile annotations "$annotations" -c ".Labels += (\$annotations | fromjson)" "$config") > config.json
+        jq -c "{ schemaVersion: 2, mediaType: \"application/vnd.oci.image.manifest.v1+json\", config: { mediaType: \"application/vnd.oci.image.config.v1+json\" }, layers: [], annotations: . }" "$annotations" > manifest.json
 
         touch layerRefs
-        if [[ -e $layers/prevOutput ]]; then
+        if [[ -e "$layers/prevOutput" ]]; then
           while true; do
-            realpath $layers >> layerRefs
-            [[ -e $layers/prevOutput ]] || break
-            layers=$(realpath $layers/prevOutput)
+            realpath "$layers" >> layerRefs
+            [[ -e "$layers/prevOutput" ]] || break
+            layers="$(realpath "$layers/prevOutput")"
           done
         fi
         tac layerRefs > layerRefs.out && mv layerRefs.out layerRefs
 
         while read layer; do
-          echo "Adding layer $(< $layer/name)..."
-          layer_diff_id=$(< $layer/diffId)
-          layer_digest=$(sha256sum $layer/layer.tar.zst | awk '{print $1}')
-          layer_size=$(wc -c < $layer/layer.tar.zst)
-          ln -s $layer/layer.tar.zst $layer_digest
+          echo "Adding layer $(< "$layer/name")..."
+          layer_diff_id=$(< "$layer/diffId")
+          layer_digest=$(sha256sum "$layer/layer.tar.zst" | awk '{print $1}')
+          layer_size=$(wc -c < "$layer/layer.tar.zst")
+          ln -s "$layer/layer.tar.zst" $layer_digest
           jq -c ".rootfs.diff_ids += [\"sha256:$layer_diff_id\"]" config.json > config.json.out && mv config.json.out config.json
           jq -c ".layers += [{ mediaType: \"application/vnd.oci.image.layer.v1.tar+zstd\", digest: \"sha256:$layer_digest\", size: $layer_size }]" manifest.json > manifest.json.out && mv manifest.json.out manifest.json
         done < layerRefs
@@ -177,7 +180,7 @@ in
         cat index.json
 
         echo 'Archiving...'
-        tar --sort=name --format=posix --mode='u+rwX,a+rX' --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime -chf $out *
+        tar --sort=name --format=posix --mode='u+rwX,a+rX' --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime -chf "$out" *
 
         echo 'Done!'
       '';
