@@ -8,7 +8,7 @@ It comes with the following software, slimmed down and compiled without floating
 
 * [Ardour](https://ardour.org), a digital audio workstation (DAW).
 * [Krita](https://krita.org/en/), a 2D digital painting program.
-* [ZynAddSubFX](https://zynaddsubfx.sourceforge.net), a software synthesizer, installed as an LV2 plugin. This particular image uses a fork I made with [a number of changes](https://github.com/zynaddsubfx/zynaddsubfx/compare/3.0.6..white-axe:zynaddsubfx:3.0.6-determinism0) to get rid of various other sources of nondeterminism.
+* [ZynAddSubFX](https://zynaddsubfx.sourceforge.net), a software synthesizer, installed as an LV2 plugin. This particular image uses a fork I made with [a number of changes](https://github.com/zynaddsubfx/zynaddsubfx/compare/3.0.6..white-axe:zynaddsubfx:3.0.6-determinism1) to get rid of various other sources of nondeterminism.
 
 # Usage
 
