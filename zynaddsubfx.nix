@@ -5,7 +5,7 @@
 # the Free Software Foundation, version 3.
 { pkgs }:
 let
-  version = "3.0.6-determinism0";
+  version = "3.0.6-determinism1";
 in
 pkgs.stdenv.mkDerivation {
   pname = "zynaddsubfx";
@@ -15,7 +15,7 @@ pkgs.stdenv.mkDerivation {
     repo = "zynaddsubfx";
     rev = version;
     fetchSubmodules = true;
-    hash = "sha256-TWSwHpW2hZeQkkINN+IIot9CpIak9vawDCvR+Mk7514=";
+    hash = "sha256-ezeR9pq/tCAKOB4zxT+bUJM7tiWPWjGPhMdVTpC4+/o=";
   };
   patches = [
     ./zynaddsubfx-disable-executable.patch
