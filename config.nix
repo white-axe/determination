@@ -4,18 +4,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, version 3.
 {
-  # Include the ability to render Krita projects in the image
-  krita = true;
   # Include the ability to render Ardour projects in the image
   ardour = true;
   # Include FFmpeg in the image
   ffmpeg = true;
   # Include FLAC tools in the image
   flac = true;
-  # Include ExifTool in the image
-  exiftool = true;
-  # Include Zopfli in the image
-  zopfli = true;
   # Include ZynAddSubFX in the image (required for Ardour projects that use this synthesizer)
   zynaddsubfx = true;
 }

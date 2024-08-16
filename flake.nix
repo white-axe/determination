@@ -58,19 +58,8 @@
             {
               name = "tools";
               paths =
-                pkgs.lib.optionals config.exiftool [ pkgs.exiftool ]
-                ++ pkgs.lib.optionals config.ffmpeg [ pkgs.ffmpeg-headless ]
-                ++ pkgs.lib.optionals config.flac [ pkgs.flac ]
-                ++ pkgs.lib.optionals config.zopfli [ (pkgs.callPackage ./zopfli.nix { }) ];
-            }
-          ]
-          ++ pkgs.lib.optionals config.krita [
-            {
-              name = "krita";
-              paths = [
-                (pkgs.callPackage ./krita.nix { })
-                (pkgs.callPackage ./zopfli.nix { })
-              ];
+                pkgs.lib.optionals config.ffmpeg [ pkgs.ffmpeg-headless ]
+                ++ pkgs.lib.optionals config.flac [ pkgs.flac ];
             }
           ]
           ++ pkgs.lib.optionals config.ardour [
@@ -94,15 +83,10 @@
             {
               name = "stuff";
               paths = [ ./stuff ];
-              runAsRoot =
-                pkgs.lib.optionalString (!config.krita) ''
-                  rm -f /bin/determination-krita-*
-                  rm -f /bin/.determination-krita-*
-                ''
-                + pkgs.lib.optionalString (!config.ardour) ''
-                  rm -f /bin/determination-ardour-*
-                  rm -f /bin/.determination-ardour-*
-                '';
+              runAsRoot = pkgs.lib.optionalString (!config.ardour) ''
+                rm -f /bin/determination-ardour-*
+                rm -f /bin/.determination-ardour-*
+              '';
               pathsToLink = [ "/root/.config/ardour8" ];
             }
           ];
