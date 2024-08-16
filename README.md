@@ -6,8 +6,8 @@ This is an [OCI container image](https://opencontainers.org) that can reproducib
 
 It comes with the following software, slimmed down and compiled without floating-point SIMD optimizations so that they behave exactly the same on most x86-64 CPUs.
 
-* [Ardour](https://ardour.org), a digital audio workstation (DAW).
-* [ZynAddSubFX](https://zynaddsubfx.sourceforge.net), a software synthesizer, installed as an LV2 plugin. This particular image uses a fork I made with [a number of changes](https://github.com/zynaddsubfx/zynaddsubfx/compare/3.0.6..white-axe:zynaddsubfx:3.0.6-determinism1) to get rid of various other sources of nondeterminism.
+* [Carla](https://github.com/falkTX/Carla), an audio plugin host.
+* [ZynAddSubFX](https://github.com/zynaddsubfx/zynaddsubfx), a software synthesizer, installed as an LV2 plugin. This particular image uses a fork I made with [a number of changes](https://github.com/zynaddsubfx/zynaddsubfx/compare/3.0.6..white-axe:zynaddsubfx:3.0.6-determinism1) to get rid of various other sources of nondeterminism.
 
 # Usage
 
@@ -21,7 +21,7 @@ docker run --rm -it --network none -v <path>:/data ghcr.io/white-axe/determinati
 
 This downloads the image, uses it to create a new container with the project directory mounted at `/data` in the container, and connects you to a Bash shell inside the container. You can also add a `:` and a version after the `ghcr.io/white-axe/determination` if you want a specific version of the image, e.g. `ghcr.io/white-axe/determination:1` for the latest version with a major version number of 1.
 
-Inside of the container, the command `determination-ardour-export` is provided for rendering Ardour projects. Assuming the .ardour file is named "session.ardour", you can run `determination-ardour-export -i /data/session.ardour` to export it as audio. Run `determination-ardour-export --help` for more detailed usage instructions.
+Inside of the container, the command `determination-export` is provided for rendering Carla patchbay projects. Assuming the .carxp file is named "project.carxp", you can run `determination-export /data/project.carxp -o /data/project.flac -e 101` to export the first 100 bars as audio. Run `determination-export --help` for more detailed usage instructions.
 
 # Building the image from source
 
@@ -36,8 +36,6 @@ git clone https://github.com/white-axe/determination
 cd determination
 nix --experimental-features 'nix-command flakes' build
 ```
-
-Feel free also to edit config.nix before running the `nix` command to exclude components from the image that you don't need.
 
 This creates an uncompressed tar archive named "result" with no file extension. Import it into Podman using `podman load -i result` on a computer that has Podman installed. To import it into Docker, install [Skopeo](https://github.com/containers/skopeo) and then run `skopeo copy oci-archive:result docker-archive:result-converted` to convert the tar archive to Docker's format before importing it with `docker load -i result-converted`. You may need to run the `podman load` or `docker load` command as root or administrator.
 

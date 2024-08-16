@@ -26,7 +26,6 @@
           })
         ];
       };
-      config = import ./config.nix;
       builder = import ./builder.nix {
         inherit pkgs;
         imageName = "determination";
@@ -45,52 +44,44 @@
           Env = [ "PATH=/bin" ];
           Cmd = [ "/bin/bash" ];
         };
-        layers =
-          [
-            {
-              name = "base";
-              paths = [
-                pkgs.bashInteractive
-                pkgs.coreutils
-                pkgs.getopt
-              ];
-              runAsRoot = pkgs.dockerTools.shadowSetup;
-            }
-            {
-              name = "tools";
-              paths =
-                pkgs.lib.optionals config.ffmpeg [ pkgs.ffmpeg-headless ]
-                ++ pkgs.lib.optionals config.flac [ pkgs.flac ];
-            }
-          ]
-          ++ pkgs.lib.optionals config.ardour [
-            {
-              name = "ardour";
-              paths = [
-                (pkgs.callPackage ./ardour.nix { })
-                pkgs.ffmpeg-headless
-                pkgs.flac
-              ];
-            }
-          ]
-          ++ pkgs.lib.optionals (config.ardour && config.zynaddsubfx) [
-            {
-              name = "zynaddsubfx";
-              paths = [ (pkgs.callPackage ./zynaddsubfx.nix { }) ];
-              pathsToLink = [ "/lib/lv2" ];
-            }
-          ]
-          ++ [
-            {
-              name = "stuff";
-              paths = [ ./stuff ];
-              runAsRoot = pkgs.lib.optionalString (!config.ardour) ''
-                rm -f /bin/determination-ardour-*
-                rm -f /bin/.determination-ardour-*
-              '';
-              pathsToLink = [ "/root/.config/ardour8" ];
-            }
-          ];
+        layers = [
+          {
+            name = "base";
+            paths = [
+              pkgs.bashInteractive
+              pkgs.coreutils
+              pkgs.getopt
+            ];
+            runAsRoot = pkgs.dockerTools.shadowSetup;
+          }
+          {
+            name = "flac";
+            paths = [ pkgs.flac ];
+          }
+          {
+            name = "zynaddsubfx";
+            paths = [ (pkgs.callPackage ./zynaddsubfx.nix { }) ];
+            pathsToLink = [ "/lib/lv2" ];
+          }
+          {
+            name = "jack";
+            paths = [ (pkgs.callPackage ./jack2.nix { }) ];
+          }
+          {
+            name = "renderer";
+            paths = [ (pkgs.callPackage ./determination-renderer.nix { }) ];
+          }
+          {
+            name = "scripts";
+            paths = [
+              (pkgs.runCommandLocal "determination-export" { } ''
+                mkdir "$out"
+                mkdir "$out/bin"
+                cp "${./determination-export}" "$out/bin/determination-export"
+              '')
+            ];
+          }
+        ];
       };
     in
     {
