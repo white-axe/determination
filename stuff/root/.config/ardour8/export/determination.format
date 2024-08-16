@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Determination - Deterministic rendering environment for music and art
+  Determination - Deterministic rendering environment for white-axe's music
   Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, version 3.
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 -->
 <ExportFormatSpecification name="Determination" id="7f40372c-c18e-4155-a6b8-80fb8ab840a1" with-cue="0" with-toc="0" with-mp4chaps="0" command="" analyse="1" reimport="0" soundcloud-upload="0">
   <Encoding id="F_FLAC" type="T_Sndfile" extension="flac" name="FLAC" has-sample-format="1" channel-limit="8"/>

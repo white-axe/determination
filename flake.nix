@@ -1,8 +1,9 @@
-# Determination - Deterministic rendering environment for music and art
+# Determination - Deterministic rendering environment for white-axe's music
 # Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, version 3.
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/release-24.05";
@@ -36,9 +37,9 @@
         os = "linux";
         annotations = {
           "org.opencontainers.image.source" = "https://github.com/white-axe/determination";
-          "org.opencontainers.image.licenses" = "GPL-3.0-only";
+          "org.opencontainers.image.licenses" = "GPL-3.0-or-later";
           "org.opencontainers.image.title" = "Determination";
-          "org.opencontainers.image.description" = "Deterministic rendering environment for white-axe's music and art";
+          "org.opencontainers.image.description" = "Deterministic rendering environment for white-axe's music";
         };
         config = {
           Env = [ "PATH=/bin" ];
