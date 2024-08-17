@@ -115,6 +115,8 @@ bool render(char *projectPath) {
     }
 
     // Enable freewheeling so the audio rendering happens faster than realtime
+    // We can't do this before loading the project because loading the project modifies the JACK graph
+    // and that's not permitted when freewheeling is enabled
     std::cerr << "[determination-renderer] Enabling JACK freewheel mode" << std::endl;
     if (jackbridge_set_freewheel(client, true)) {
         error = "Failed to enable JACK freewheel mode";
@@ -132,6 +134,7 @@ bool render(char *projectPath) {
         // Block this thread until `process()` posts to the semaphore
         if (sem_wait(&semaphore)) {
             error = "Failed to wait for semaphore to be posted";
+            jackbridge_transport_stop(client);
             state.store(SemFail);
             return false;
         }
@@ -160,10 +163,6 @@ bool render(char *projectPath) {
 
 int main(int argc, char **argv) {
     std::cerr << "[determination-renderer] Initializing" << std::endl;
-    if (sem_init(&semaphore, 0, 0)) {
-        std::cerr << "\e[91m[determination-renderer] Failed to initialize semaphore\e[0m" << std::endl;
-        return 1;
-    }
     state.store(Running);
     startBar = std::strtol(argv[2], NULL, 10);
     startBeat = std::strtol(argv[3], NULL, 10);
@@ -185,6 +184,11 @@ int main(int argc, char **argv) {
         std::cerr << "\e[91m[determination-renderer] Failed to open pipe\e[0m" << std::endl;
         return 1;
     }
+    if (sem_init(&semaphore, 0, 0)) {
+        std::cerr << "\e[91m[determination-renderer] Failed to initialize semaphore\e[0m" << std::endl;
+        std::fclose(pipe);
+        return 1;
+    }
     rb = jack_ringbuffer_create(BUFFER_SIZE);
 
     bool ok = render(argv[1]);
@@ -194,6 +198,7 @@ int main(int argc, char **argv) {
         std::cerr << "[determination-renderer] Rendering finished!" << std::endl;
 
     jack_ringbuffer_free(rb);
+    sem_destroy(&semaphore);
     std::fclose(pipe);
 
     // `carla_engine_close()` modifies the JACK graph,
