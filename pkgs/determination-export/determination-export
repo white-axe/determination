@@ -20,7 +20,7 @@ usage () {
   >&2 echo 'Usage: determination-export path [options]'
   >&2 echo '    path                      Path to the .carxp file to export'
   >&2 echo 'Options:'
-  >&2 echo '    -h, --help                Show a help message'
+  >&2 echo '    -h/--help                 Show a help message'
   >&2 echo '    -o/--output <path>        Path where the FLAC file should be exported'
   >&2 echo '                              (default: the input path with the file extension replaced with ".flac")'
   >&2 echo '    -s/--start-bar <integer>  Bar number at which to start rendering audio'
