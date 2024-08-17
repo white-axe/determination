@@ -59,17 +59,16 @@
             paths = [ pkgs.flac ];
           }
           {
+            name = "renderer";
+            paths = [
+              (pkgs.callPackage ./determination-renderer.nix { })
+              (pkgs.callPackage ./jack2.nix { })
+            ];
+          }
+          {
             name = "zynaddsubfx";
             paths = [ (pkgs.callPackage ./zynaddsubfx.nix { }) ];
             pathsToLink = [ "/lib/lv2" ];
-          }
-          {
-            name = "jack";
-            paths = [ (pkgs.callPackage ./jack2.nix { }) ];
-          }
-          {
-            name = "renderer";
-            paths = [ (pkgs.callPackage ./determination-renderer.nix { }) ];
           }
           {
             name = "scripts";
