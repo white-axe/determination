@@ -75,7 +75,7 @@ fi
 
 echo '[determination-export] Starting up FLAC'
 if [ ! -p /determination-renderer-pipe ]; then mkfifo /determination-renderer-pipe; fi
-flac --force --fast --force-raw-format --endian=little --channels=2 --bps=24 --sample-rate=48000 --sign=signed -o "$output" - < /determination-renderer-pipe &
+flac --force --force-raw-format --endian=little --channels=2 --bps=24 --sample-rate=48000 --sign=signed -o "$output" - < /determination-renderer-pipe &
 
 echo '[determination-export] Starting up JACK'
 jackd -r -d dummy -C 0 -P 0 -r 48000 -p 1024 &

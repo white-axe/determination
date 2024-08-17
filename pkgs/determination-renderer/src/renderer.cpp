@@ -9,28 +9,25 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cstring>
 #include <iostream>
 #include <semaphore.h>
-#include <jack/ringbuffer.h>
 #include "source/jackbridge/JackBridge.hpp"
 #include "source/includes/CarlaNativePlugin.h"
 
 sem_t semaphore;
 
 enum State {
-    Running,
-    Done,
-    Xrun,
+    Ok,
+    PipeFail,
     SemFail,
 };
 std::atomic<State> state;
 
-#define BUFFER_SIZE 67108864
-jack_ringbuffer_t *rb;
-char buf[BUFFER_SIZE];
+char buf[67108864];
 
 CarlaHostHandle handle;
-FILE *pipe;
+FILE *pipeFile;
 jack_client_t *client;
 jack_port_t *recorderL;
 jack_port_t *recorderR;
@@ -47,20 +44,16 @@ const char *error = NULL;
 jack_client_t *determination_get_jack_client(CarlaHostHandle handle);
 void determination_set_process_callback(CarlaHostHandle handle, JackProcessCallback callback, void *arg);
 
-void post() {
+void stop_and_post(State val) {
+    jackbridge_transport_stop(client);
+    state.store(val);
     if (sem_post(&semaphore))
         state.store(SemFail);
 }
 
-void stop_and_post(State val) {
-    jackbridge_transport_stop(client);
-    state.store(val);
-    post();
-}
-
 int process(jack_nframes_t nframes, void *_null) {
     // Do nothing if rendering has stopped
-    if (state.load() != Running)
+    if (state.load() != Ok)
         return 0;
 
     // Do nothing if JACK transport isn't playing
@@ -74,35 +67,31 @@ int process(jack_nframes_t nframes, void *_null) {
 
     // Stop once the JACK transport has reached the end position
     if (pos.bar > endBar || (pos.bar == endBar && (pos.beat > endBeat || (pos.beat == endBeat && pos.tick >= endTick)))) {
-        stop_and_post(Done);
+        stop_and_post(Ok);
         return 0;
     }
 
-    // Write the data we received on our input ports to the ringbuffer
+    // Get the data we received on our input ports and copy to our internal buffer
     float *samplesL = (float *)jackbridge_port_get_buffer(recorderL, nframes);
     float *samplesR = (float *)jackbridge_port_get_buffer(recorderR, nframes);
+    char *buffer = buf;
     for (jack_nframes_t i = 0; i < nframes; ++i) {
-        // Get a sample from each channel, convert them from 32-bit floating point to signed 24-bit integer and push to the ringbuffer
+        // Get a sample from each channel and convert them from 32-bit floating point to signed 24-bit integer
         // NOTE: Assumes the CPU is little-endian
         int32_t sample;
 
         sample = std::roundf(std::clamp(*(samplesL++), -1.0f, 1.0f) * 8388607.0f);
-        if (jack_ringbuffer_write_space(rb) < 3) {
-            stop_and_post(Xrun);
-            return 0;
-        }
-        jack_ringbuffer_write(rb, (char *)&sample, 3);
+        std::memcpy(buffer, &sample, 3);
+        buffer += 3;
 
         sample = std::roundf(std::clamp(*(samplesR++), -1.0f, 1.0f) * 8388607.0f);
-        if (jack_ringbuffer_write_space(rb) < 3) {
-            stop_and_post(Xrun);
-            return 0;
-        }
-        jack_ringbuffer_write(rb, (char *)&sample, 3);
+        std::memcpy(buffer, &sample, 3);
+        buffer += 3;
     }
 
-    // Tell the main thread we've written something
-    post();
+    // Writing to the pipe isn't realtime-safe, but freewheeling should be enabled by now so it's fine
+    if (std::fwrite(buf, 6, nframes, pipeFile) < nframes)
+        stop_and_post(PipeFail);
 
     return 0;
 }
@@ -129,41 +118,32 @@ bool render(char *projectPath) {
     std::cerr << "[determination-renderer] Starting JACK transport" << std::endl;
     carla_transport_play(handle);
 
+    // Block this thread until `process()` posts to the semaphore
     std::cerr << "[determination-renderer] Rendering audio" << std::endl;
-    for (;;) {
-        // Block this thread until `process()` posts to the semaphore
-        if (sem_wait(&semaphore)) {
-            error = "Failed to wait for semaphore to be posted";
-            jackbridge_transport_stop(client);
-            state.store(SemFail);
-            return false;
-        }
-
-        switch (state.load()) {
-            case Running:
-                break;
-            case Done:
-                return true;
-            case Xrun:
-                error = "Buffer overrun";
-                return false;
-            case SemFail:
-                error = "Failed to post semaphore";
-                return false;
-        }
-
-        // If `process()` is still running, write all received samples to the pipe
-        size_t space;
-        while ((space = jack_ringbuffer_read_space(rb))) {
-            size_t count = space < BUFFER_SIZE ? space : BUFFER_SIZE;
-            std::fwrite(buf, 1, jack_ringbuffer_read(rb, buf, count), pipe);
-        }
+    if (sem_wait(&semaphore)) {
+        error = "Failed to wait for semaphore to be posted";
+        jackbridge_transport_stop(client);
+        state.store(SemFail);
+        return false;
     }
+
+    switch (state.load()) {
+        case Ok:
+            return true;
+        case PipeFail:
+            error = "Broken pipe";
+            return false;
+        case SemFail:
+            error = "Failed to post semaphore";
+            return false;
+    }
+
+    // Unreachable
 }
 
 int main(int argc, char **argv) {
     std::cerr << "[determination-renderer] Initializing" << std::endl;
-    state.store(Running);
+    state.store(Ok);
     startBar = std::strtol(argv[2], NULL, 10);
     startBeat = std::strtol(argv[3], NULL, 10);
     startTick = std::strtol(argv[4], NULL, 10);
@@ -180,16 +160,15 @@ int main(int argc, char **argv) {
     recorderR = jackbridge_port_by_name(client, "DeterminationRenderer:RecorderR");
 
     std::cerr << "[determination-renderer] Opening pipe for writing PCM data" << std::endl;
-    if ((pipe = std::fopen("/determination-renderer-pipe", "a")) == NULL) {
+    if ((pipeFile = std::fopen("/determination-renderer-pipe", "a")) == NULL) {
         std::cerr << "\e[91m[determination-renderer] Failed to open pipe\e[0m" << std::endl;
         return 1;
     }
     if (sem_init(&semaphore, 0, 0)) {
         std::cerr << "\e[91m[determination-renderer] Failed to initialize semaphore\e[0m" << std::endl;
-        std::fclose(pipe);
+        std::fclose(pipeFile);
         return 1;
     }
-    rb = jack_ringbuffer_create(BUFFER_SIZE);
 
     bool ok = render(argv[1]);
     if (!ok)
@@ -197,9 +176,8 @@ int main(int argc, char **argv) {
     else
         std::cerr << "[determination-renderer] Rendering finished!" << std::endl;
 
-    jack_ringbuffer_free(rb);
     sem_destroy(&semaphore);
-    std::fclose(pipe);
+    std::fclose(pipeFile);
 
     // `carla_engine_close()` modifies the JACK graph,
     // which is not permitted when freewheeling is enabled,
