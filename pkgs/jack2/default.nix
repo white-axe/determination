@@ -24,7 +24,6 @@ pkgs.stdenv.mkDerivation {
     pkgs.python3
     pkgs.wafHook
   ];
-  buildInputs = [ pkgs.eigen ];
   postPatch = ''
     patchShebangs --build svnversion_regenerate.sh
   '';
