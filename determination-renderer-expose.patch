@@ -1,0 +1,57 @@
+# Determination - Deterministic rendering environment for white-axe's music
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This causes Carla's JACK engine to expose some custom extra functions:
+# `determination_get_jack_client` and `determination_set_process_callback`.
+# We need these to implement our renderer. I can't think of any other way to
+# implement this functionality without them.
+
+--- a/source/backend/engine/CarlaEngineJack.cpp
++++ b/source/backend/engine/CarlaEngineJack.cpp
+@@ -1324,7 +1324,7 @@ class CarlaEngineJack : public CarlaEngine
+                       , private CarlaThread
+ #endif
+ {
+-public:
++public: jack_client_t *determination_get_jack_client() { return fClient; } void determination_set_process_callback(JackProcessCallback callback, void *arg) { fCallback = callback; fCallbackArg = arg; }
+     CarlaEngineJack()
+         : CarlaEngine(),
+ #ifndef BUILD_BRIDGE
+@@ -2841,8 +2841,8 @@ protected:
+         offlineModeChanged(isFreewheel);
+     }
+ 
+-    void handleJackProcessCallback(const uint32_t nframes)
+-    {
++    void handleJackProcessCallback(const uint32_t nframes) {
++        if (fCallback != NULL) fCallback(nframes, fCallbackArg); // Call the callback set by `determination_set_process_callback()`
+         const PendingRtEventsRunner prt(this, nframes);
+ 
+         CARLA_SAFE_ASSERT_INT2_RETURN(nframes == pData->bufferSize, nframes, pData->bufferSize,);
+@@ -3570,7 +3570,7 @@ private:
+     bool fExternalPatchbayHost;
+     bool fExternalPatchbayOsc;
+     bool fFreewheel;
+-
++    JackProcessCallback fCallback; void *fCallbackArg;
+     CarlaString fClientName;
+     CarlaRecursiveMutex fThreadSafeMetadataMutex;
+ 
+@@ -4562,3 +4562,13 @@ void jack_finish(void *arg)
+ 
+ // -----------------------------------------------------------------------
+ #endif // defined(JACKBRIDGE_DIRECT) && !defined(BUILD_BRIDGE)
++
++#include "CarlaHostImpl.hpp"
++
++jack_client_t *determination_get_jack_client(CarlaHostHandle handle) {
++    return ((CarlaBackend::CarlaEngineJack *)(((CarlaHostStandalone *)handle)->engine))->determination_get_jack_client();
++}
++
++void determination_set_process_callback(CarlaHostHandle handle, JackProcessCallback callback, void *arg) {
++    ((CarlaBackend::CarlaEngineJack *)(((CarlaHostStandalone *)handle)->engine))->determination_set_process_callback(callback, arg);
++}

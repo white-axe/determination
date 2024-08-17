@@ -16,7 +16,12 @@ let
       rev = version;
       hash = "sha256-uGAuKheoMfP9hZXsw29ec+58dJM8wMuowe95QutzKBY=";
     };
-    patches = [ ./determination-renderer.patch ];
+    patches = [
+      ./determination-renderer-expose.patch
+      ./determination-renderer-only-process-when-rolling.patch
+      ./determination-renderer-recorder.patch
+      ./determination-renderer-static.patch
+    ];
     buildPhase = ":";
     installPhase = ''
       cp -r "." "$out"

@@ -1,0 +1,42 @@
+# Determination - Deterministic rendering environment for white-axe's music
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This patch causes Carla to create JACK audio ports on the host JACK client
+# called "RecorderL" and "RecorderR", and makes connections to the "Audio
+# Output" JACK client converted to be connected to these input ports instead of
+# to the system playback audio ports so that we can record the audio that goes
+# to "Audio Output".
+
+--- a/source/backend/engine/CarlaEngine.cpp
++++ b/source/backend/engine/CarlaEngine.cpp
+@@ -3528,11 +3528,11 @@ bool CarlaEngine::loadProjectInternal(water::XmlDocument& xmlDoc, const bool alw
+                         water::String externalPort = targetPort.trimCharactersAtStart("Audio Output:");
+ 
+                         /**/ if (externalPort == "Left")
+-                            externalPort = "system:playback_1";
++                            externalPort = water::String(getName()) + ":RecorderL"; // Convert "Audio Output:Left" to RecorderL
+                         else if (externalPort == "Right")
+-                            externalPort = "system:playback_2";
+-                        else
+-                            externalPort = "system:playback_ " + externalPort.trimCharactersAtStart("Playback ");
++                            externalPort = water::String(getName()) + ":RecorderR"; // Convert "Audio Output:Right" to RecorderR
++                        //else
++                        //    externalPort = "system:playback_ " + externalPort.trimCharactersAtStart("Playback ");
+ 
+                         carla_stdout("Converted port name '%s' to '%s' for this session",
+                                      targetPort.toRawUTF8(), externalPort.toRawUTF8());
+--- a/source/backend/engine/CarlaEngineJack.cpp
++++ b/source/backend/engine/CarlaEngineJack.cpp
+@@ -1503,7 +1503,7 @@ public:
+         }
+ 
+         fClientName = jackClientName;
+-
++        jackbridge_port_register(fClient, "RecorderL", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput | JackPortIsTerminal, 0); jackbridge_port_register(fClient, "RecorderR", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput | JackPortIsTerminal, 0); // Create the RecorderL and RecorderR audio ports
+         const EngineOptions& opts(pData->options);
+ 
+         pData->bufferSize = jackbridge_get_buffer_size(fClient);
