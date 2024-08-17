@@ -20,10 +20,8 @@ pkgs.stdenv.mkDerivation {
   };
   patches = [
     ./disable-executable.patch
-    ./dpf.patch
     ./fpu.patch
     ./sequential-pad.patch
-    ./slot-numbers.patch
     ./stdint.patch
     ./thread-local-prng.patch
   ];
