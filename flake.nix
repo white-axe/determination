@@ -55,6 +55,13 @@
             runAsRoot = pkgs.dockerTools.shadowSetup;
           }
           {
+            name = "plugin-base";
+            paths = [
+              (pkgs.callPackage ./pkgs/fftw { })
+              pkgs.lv2
+            ];
+          }
+          {
             name = "flac";
             paths = [ pkgs.flac ];
           }
@@ -63,6 +70,14 @@
             paths = [
               (pkgs.callPackage ./pkgs/determination-renderer { })
               (pkgs.callPackage ./pkgs/jack2 { })
+            ];
+          }
+          {
+            name = "calf";
+            paths = [ (pkgs.callPackage ./pkgs/calf { }) ];
+            pathsToLink = [
+              "/lib/calf"
+              "/lib/lv2"
             ];
           }
           {

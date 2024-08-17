@@ -6,6 +6,7 @@ This is an [OCI container image](https://opencontainers.org) that can reproducib
 
 It comes with the following software, slimmed down and compiled without floating-point SIMD optimizations so that they behave exactly the same on most x86-64 CPUs.
 
+* [Calf Studio Gear](https://github.com/calf-studio-gear/calf), a collection of LV2 plugins, mostly effects.
 * [Carla](https://github.com/falkTX/Carla), an audio plugin host.
 * [ZynAddSubFX](https://github.com/zynaddsubfx/zynaddsubfx), a software synthesizer, installed as an LV2 plugin.
 
