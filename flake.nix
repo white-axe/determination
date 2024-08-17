@@ -61,24 +61,18 @@
           {
             name = "renderer";
             paths = [
-              (pkgs.callPackage ./determination-renderer.nix { })
-              (pkgs.callPackage ./jack2.nix { })
+              (pkgs.callPackage ./pkgs/determination-renderer { })
+              (pkgs.callPackage ./pkgs/jack2 { })
             ];
           }
           {
             name = "zynaddsubfx";
-            paths = [ (pkgs.callPackage ./zynaddsubfx.nix { }) ];
+            paths = [ (pkgs.callPackage ./pkgs/zynaddsubfx { }) ];
             pathsToLink = [ "/lib/lv2" ];
           }
           {
             name = "scripts";
-            paths = [
-              (pkgs.runCommandLocal "determination-export" { } ''
-                mkdir "$out"
-                mkdir "$out/bin"
-                cp "${./determination-export}" "$out/bin/determination-export"
-              '')
-            ];
+            paths = [ (pkgs.callPackage ./pkgs/determination-export { }) ];
           }
         ];
       };

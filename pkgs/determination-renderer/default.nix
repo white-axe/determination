@@ -17,10 +17,10 @@ let
       hash = "sha256-uGAuKheoMfP9hZXsw29ec+58dJM8wMuowe95QutzKBY=";
     };
     patches = [
-      ./determination-renderer-expose.patch
-      ./determination-renderer-only-process-when-rolling.patch
-      ./determination-renderer-recorder.patch
-      ./determination-renderer-static.patch
+      ./expose.patch
+      ./recorder.patch
+      ./rolling.patch
+      ./static.patch
     ];
     buildPhase = ":";
     installPhase = ''
@@ -32,13 +32,13 @@ in
 pkgs.stdenv.mkDerivation {
   pname = "determination-renderer";
   inherit version;
-  src = ./determination-renderer;
+  src = ./src;
   nativeBuildInputs = [
     pkgs.cmake
     pkgs.makeWrapper
     pkgs.pkg-config
   ];
-  buildInputs = [ (pkgs.callPackage ./jack2.nix { }) ];
+  buildInputs = [ (pkgs.callPackage ../jack2 { }) ];
   cmakeFlags = [ "-DDETERMINATION_CARLA_PATH=${carla}" ];
   buildPhase = ''
     cmake --build . -t determination-renderer -j $NIX_BUILD_CORES

@@ -19,13 +19,13 @@ pkgs.stdenv.mkDerivation {
     hash = "sha256-0siAx141DZx39facXWmKbsi0rHBNpobApTdey07EcXg=";
   };
   patches = [
-    ./zynaddsubfx-fix-compilation-errors.patch
-    ./zynaddsubfx-disable-executable.patch
-    ./zynaddsubfx-disable-fpu-optimizations.patch
-    ./zynaddsubfx-fix-dpf.patch
-    ./zynaddsubfx-fix-slot-numbers.patch
-    ./zynaddsubfx-sequential-pad.patch
-    ./zynaddsubfx-thread-local-prng.patch
+    ./disable-executable.patch
+    ./dpf.patch
+    ./fpu.patch
+    ./sequential-pad.patch
+    ./slot-numbers.patch
+    ./stdint.patch
+    ./thread-local-prng.patch
   ];
   nativeBuildInputs = [
     pkgs.cmake
@@ -33,7 +33,7 @@ pkgs.stdenv.mkDerivation {
     pkgs.pkg-config
   ];
   buildInputs = [
-    (pkgs.callPackage ./fftw.nix { })
+    (pkgs.callPackage ../fftw { })
     pkgs.liblo
     pkgs.minixml
     pkgs.zlib
