@@ -25,6 +25,7 @@ pkgs.stdenv.mkDerivation {
     ./zynaddsubfx-fix-dpf.patch
     ./zynaddsubfx-fix-slot-numbers.patch
     ./zynaddsubfx-sequential-pad.patch
+    ./zynaddsubfx-thread-local-prng.patch
   ];
   nativeBuildInputs = [
     pkgs.cmake
