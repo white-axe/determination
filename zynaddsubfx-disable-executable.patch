@@ -9,7 +9,7 @@
 
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -578,19 +578,19 @@ if(CompileTests)
+@@ -599,19 +599,19 @@ if(CompileTests)
  endif(CompileTests)
  
  
@@ -39,7 +39,7 @@
  
  if (DssiEnable)
  	add_library(zynaddsubfx_dssi SHARED
-@@ -612,9 +612,9 @@ if (DssiEnable)
+@@ -633,9 +633,9 @@ if (DssiEnable)
      install(TARGETS zynaddsubfx_dssi LIBRARY DESTINATION ${PluginLibDir}/dssi/)
  endif()
  

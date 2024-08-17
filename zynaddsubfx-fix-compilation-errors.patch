@@ -1,0 +1,33 @@
+# Determination - Deterministic rendering environment for white-axe's music
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This fixes compilation errors where the compiler complains about `uint8_t` not
+# existing because stdint.h is not included. Dunno why this didn't cause errors
+# when the developers compiled the program.
+
+--- a/src/Misc/Bank.h
++++ b/src/Misc/Bank.h
+@@ -18,7 +18,7 @@
+ #include <vector>
+ #include "../globals.h"
+ #include "Config.h"
+-
++#include <stdint.h>
+ //entries in a bank
+ #define BANK_SIZE 160
+ 
+--- a/src/Nio/MidiIn.h
++++ b/src/Nio/MidiIn.h
+@@ -17,7 +17,7 @@
+ #define MIDI_IN_H
+ 
+ #include "Engine.h"
+-
++#include <stdint.h>//uint8_t
+ namespace zyn {
+ 
+ /**This class is inherited by all the Midi input classes*/
