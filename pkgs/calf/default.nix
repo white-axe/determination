@@ -24,9 +24,9 @@ pkgs.stdenv.mkDerivation {
   ];
   buildInputs = [
     pkgs.expat
-    pkgs.glib
     (pkgs.callPackage ../fftw { })
     pkgs.fluidsynth
+    pkgs.glib
     pkgs.lv2
   ];
 }

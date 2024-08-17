@@ -55,13 +55,6 @@
             runAsRoot = pkgs.dockerTools.shadowSetup;
           }
           {
-            name = "plugin-base";
-            paths = [
-              (pkgs.callPackage ./pkgs/fftw { })
-              pkgs.lv2
-            ];
-          }
-          {
             name = "flac";
             paths = [ pkgs.flac ];
           }
