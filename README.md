@@ -17,7 +17,7 @@ Install and initialize either [Docker](https://www.docker.com) or [Podman](https
 Then run this command from a terminal, replacing `<path>` with the absolute path on your computer of a project directory. You may need to run the command as root, or as administrator on Windows. If you're using Podman, also replace `docker` with `podman` in the command.
 
 ```
-docker run --rm -it --network none -v <path>:/data ghcr.io/white-axe/determination
+docker run --rm -it --shm-size 256m --network none -v <path>:/data ghcr.io/white-axe/determination
 ```
 
 This downloads the image, uses it to create a new container with the project directory mounted at `/data` in the container, and connects you to a Bash shell inside the container. You can also add a `:` and a version after the `ghcr.io/white-axe/determination` if you want a specific version of the image, e.g. `ghcr.io/white-axe/determination:1` for the latest version with a major version number of 1.

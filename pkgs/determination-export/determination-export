@@ -69,36 +69,36 @@ if [ -z "$input" ]; then usage; exit 1; fi
 if [ -z "$output" ]; then output="$(dirname "$input")/$(basename "$input" | cut -d . -f 1).flac"; fi
 
 if [ -S /dev/shm/jack_default_0_0 ]; then
-  echo -e '\e[91m[determination-export] Please shut down the JACK server before running this command\e[0m'
+  >&2 echo -e '\e[91m[determination-export] Please shut down the JACK server before running this command\e[0m'
   exit 1
 fi
 
-echo '[determination-export] Starting up FLAC'
+>&2 echo '[determination-export] Starting up FLAC'
 if [ ! -p /determination-renderer-pipe ]; then mkfifo /determination-renderer-pipe; fi
 flac --force --force-raw-format --endian=little --channels=2 --bps=24 --sample-rate=48000 --sign=signed -o "$output" - < /determination-renderer-pipe &
 
-echo '[determination-export] Starting up JACK'
-jackd -r -d dummy -C 0 -P 0 -r 48000 -p 1024 &
+>&2 echo '[determination-export] Starting up JACK'
+jackd -r -p 4096 -d dummy -C 0 -P 0 -r 48000 -p 1024 &
 jack_pid=$!
 until [ -S /dev/shm/jack_default_0_0 ]; do sleep 0.1; done
 sleep 0.5
 
-if LV2_PATH=/lib/lv2 .determination-renderer "$input" "$start_bar" "$start_beat" "$start_tick" "$end_bar" "$end_beat" "$end_tick"; then
-  echo '[determination-export] Shutting down JACK'
+if LV2_PATH="/lib/lv2:$LV2_PATH" .determination-renderer "$input" "$start_bar" "$start_beat" "$start_tick" "$end_bar" "$end_beat" "$end_tick"; then
+  >&2 echo '[determination-export] Shutting down JACK'
   kill -INT -$jack_pid
 
-  echo '[determination-export] Canonicalizing'
+  >&2 echo '[determination-export] Canonicalizing'
   flac --force -8 --no-padding --no-seektable "$output"
   metaflac --remove-all --dont-use-padding "$output"
   metaflac --add-seekpoint=10s --dont-use-padding "$output"
 
   while [ -S /dev/shm/jack_default_0_0 ]; do sleep 0.1; done
   sleep 0.5
-  echo '[determination-export] Export finished!'
+  >&2 echo '[determination-export] Export finished!'
 else
-  echo '[determination-export] Shutting down JACK'
+  >&2 echo '[determination-export] Shutting down JACK'
   kill -INT -$jack_pid
   while [ -S /dev/shm/jack_default_0_0 ]; do sleep 0.1; done
   sleep 0.5
-  echo -e '\e[91m[determination-export] Export failed\e[0m'
+  >&2 echo -e '\e[91m[determination-export] Export failed\e[0m'
 fi

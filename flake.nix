@@ -55,13 +55,10 @@
             runAsRoot = pkgs.dockerTools.shadowSetup;
           }
           {
-            name = "flac";
-            paths = [ pkgs.flac ];
-          }
-          {
             name = "renderer";
             paths = [
               (pkgs.callPackage ./pkgs/determination-renderer { })
+              pkgs.flac
               (pkgs.callPackage ./pkgs/jack2 { })
             ];
           }
