@@ -6,27 +6,28 @@
 # (at your option) any later version.
 { pkgs }:
 let
-  version = "0.90.3";
+  version = "2.3.5";
 in
 pkgs.stdenv.mkDerivation {
-  pname = "calf";
+  pname = "fluidsynth";
   inherit version;
   src = pkgs.fetchFromGitHub {
-    owner = "calf-studio-gear";
-    repo = "calf";
-    rev = version;
-    hash = "sha256-V2TY1xmV223cnc6CxaTuvLHqocVVIkQlbSI6Z0VTH00=";
+    owner = "FluidSynth";
+    repo = "fluidsynth";
+    rev = "v${version}";
+    sha256 = "sha256-CzKfvQzhF4Mz2WZaJM/Nt6XjF6ThlX4jyQSaXfZukG8=";
   };
-  patches = [ ./fpu.patch ];
   nativeBuildInputs = [
-    pkgs.autoreconfHook
+    pkgs.cmake
     pkgs.pkg-config
   ];
-  buildInputs = [
-    pkgs.expat
-    (pkgs.callPackage ../fftw { })
-    (pkgs.callPackage ../fluidsynth { })
-    pkgs.glib
-    pkgs.lv2
+  buildInputs = [ pkgs.glib ];
+  cmakeFlags = [
+    "-Denable-framework=off"
+    "-Denable-ipv6=off"
+    "-Denable-network=off"
+    "-Denable-openmp=off"
+    "-Denable-oss=off"
+    "-Denable-threads=off"
   ];
 }
