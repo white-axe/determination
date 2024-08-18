@@ -162,11 +162,13 @@ int main(int argc, char **argv) {
     std::cerr << "[determination-renderer] Opening pipe for writing PCM data" << std::endl;
     if ((pipeFile = std::fopen("/determination-renderer-pipe", "a")) == NULL) {
         std::cerr << "\e[91m[determination-renderer] Failed to open pipe\e[0m" << std::endl;
+        carla_engine_close(handle);
         return 1;
     }
     if (sem_init(&semaphore, 0, 0)) {
         std::cerr << "\e[91m[determination-renderer] Failed to initialize semaphore\e[0m" << std::endl;
         std::fclose(pipeFile);
+        carla_engine_close(handle);
         return 1;
     }
 
