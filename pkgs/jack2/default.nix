@@ -19,7 +19,6 @@ pkgs.stdenv.mkDerivation {
   };
   patches = [ ./fpu.patch ];
   nativeBuildInputs = [
-    pkgs.makeWrapper
     pkgs.pkg-config
     pkgs.python3
     pkgs.wafHook

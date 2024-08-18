@@ -27,7 +27,6 @@ pkgs.stdenv.mkDerivation {
   ];
   nativeBuildInputs = [
     pkgs.cmake
-    pkgs.makeWrapper
     pkgs.pkg-config
   ];
   buildInputs = [
