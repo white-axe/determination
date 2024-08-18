@@ -24,7 +24,7 @@ enum State {
 };
 std::atomic<State> state;
 
-char buf[67108864];
+char buf[49152]; // Large enough for a JACK buffer size of 8192
 
 CarlaHostHandle handle;
 FILE *pipeFile;
