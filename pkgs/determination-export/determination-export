@@ -47,7 +47,7 @@ end_bar='101'
 end_beat='1'
 end_tick='0'
 
-opts=$(getopt -n determination-export -o ho:s:e: -l help,start-bar:,start-beat:,start-tick:,end-bar:,end-beat:,end-tick: -- "$@")
+opts=$(getopt -n determination-export -o ho:s:e: -l help,output:,start-bar:,start-beat:,start-tick:,end-bar:,end-beat:,end-tick: -- "$@")
 eval set -- "$opts"
 while true; do
   case "$1" in
