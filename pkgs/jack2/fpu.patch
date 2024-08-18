@@ -1,0 +1,33 @@
+# Determination - Deterministic rendering environment for white-axe's music
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This patch disables floating-point optimizations so that jack2's results don't
+# change depending on what CPU the program is running on or what compiler
+# version we're using.
+
+--- a/common/JackAudioPort.cpp
++++ b/common/JackAudioPort.cpp
+@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ #include "JackPortType.h"
+ 
+ #include <string.h>
+-
++#undef __SSE__
+ #if defined (__APPLE__)
+ #include <Accelerate/Accelerate.h>
+ #elif defined (__SSE__) && !defined (__sun__)
+--- a/common/memops.c
++++ b/common/memops.c
+@@ -34,7 +34,7 @@
+ #include <endian.h>
+ #endif
+ #include "memops.h"
+-
++#undef __SSE2__
+ #if defined (__SSE2__) && !defined (__sun__)
+ #include <emmintrin.h>
+ #ifdef __SSE4_1__

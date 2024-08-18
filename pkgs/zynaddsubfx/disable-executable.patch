@@ -1,0 +1,54 @@
+# Determination - Deterministic rendering environment for white-axe's music
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# The more unnecessary stuff we disable, the better.
+
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -599,19 +599,19 @@ if(CompileTests)
+ endif(CompileTests)
+ 
+ 
+-add_executable(zynaddsubfx main.cpp)
++#add_executable(zynaddsubfx main.cpp)
+ 
+ #Warning: the required ordering of these to get proper linking depends upon the
+ #         phase of the moon
+-target_link_libraries(zynaddsubfx
+-    zynaddsubfx_core
+-	zynaddsubfx_nio
+-    zynaddsubfx_gui_bridge
+-	${GUI_LIBRARIES}
+-	${NIO_LIBRARIES}
+-	${AUDIO_LIBRARIES}
+-    ${PLATFORM_LIBRARIES}
+-    )
++#target_link_libraries(zynaddsubfx
++#    zynaddsubfx_core
++#	zynaddsubfx_nio
++#    zynaddsubfx_gui_bridge
++#	${GUI_LIBRARIES}
++#	${NIO_LIBRARIES}
++#	${AUDIO_LIBRARIES}
++#    ${PLATFORM_LIBRARIES}
++#    )
+ 
+ if (DssiEnable)
+ 	add_library(zynaddsubfx_dssi SHARED
+@@ -633,9 +633,9 @@ if (DssiEnable)
+     install(TARGETS zynaddsubfx_dssi LIBRARY DESTINATION ${PluginLibDir}/dssi/)
+ endif()
+ 
+-install(TARGETS zynaddsubfx
+-	RUNTIME DESTINATION bin
+-	)
++#install(TARGETS zynaddsubfx
++#	RUNTIME DESTINATION bin
++#	)
+ if(NtkGui)
+     install(DIRECTORY ../pixmaps DESTINATION share/zynaddsubfx)
+ endif(NtkGui)

@@ -1,8 +1,9 @@
-# Determination - Deterministic rendering environment for music and art
+# Determination - Deterministic rendering environment for white-axe's music
 # Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, version 3.
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/release-24.05";
@@ -25,7 +26,6 @@
           })
         ];
       };
-      config = import ./config.nix;
       builder = import ./builder.nix {
         inherit pkgs;
         imageName = "determination";
@@ -36,76 +36,50 @@
         os = "linux";
         annotations = {
           "org.opencontainers.image.source" = "https://github.com/white-axe/determination";
-          "org.opencontainers.image.licenses" = "GPL-3.0-only";
+          "org.opencontainers.image.licenses" = "GPL-3.0-or-later";
           "org.opencontainers.image.title" = "Determination";
-          "org.opencontainers.image.description" = "Deterministic rendering environment for white-axe's music and art";
+          "org.opencontainers.image.description" = "Deterministic rendering environment for white-axe's music";
         };
         config = {
           Env = [ "PATH=/bin" ];
           Cmd = [ "/bin/bash" ];
         };
-        layers =
-          [
-            {
-              name = "base";
-              paths = [
-                pkgs.bashInteractive
-                pkgs.coreutils
-                pkgs.getopt
-              ];
-              runAsRoot = pkgs.dockerTools.shadowSetup;
-            }
-            {
-              name = "tools";
-              paths =
-                pkgs.lib.optionals config.exiftool [ pkgs.exiftool ]
-                ++ pkgs.lib.optionals config.ffmpeg [ pkgs.ffmpeg-headless ]
-                ++ pkgs.lib.optionals config.flac [ pkgs.flac ]
-                ++ pkgs.lib.optionals config.zopfli [ (pkgs.callPackage ./zopfli.nix { }) ];
-            }
-          ]
-          ++ pkgs.lib.optionals config.krita [
-            {
-              name = "krita";
-              paths = [
-                (pkgs.callPackage ./krita.nix { })
-                (pkgs.callPackage ./zopfli.nix { })
-              ];
-            }
-          ]
-          ++ pkgs.lib.optionals config.ardour [
-            {
-              name = "ardour";
-              paths = [
-                (pkgs.callPackage ./ardour.nix { })
-                pkgs.ffmpeg-headless
-                pkgs.flac
-              ];
-            }
-          ]
-          ++ pkgs.lib.optionals (config.ardour && config.zynaddsubfx) [
-            {
-              name = "zynaddsubfx";
-              paths = [ (pkgs.callPackage ./zynaddsubfx.nix { }) ];
-              pathsToLink = [ "/lib/lv2" ];
-            }
-          ]
-          ++ [
-            {
-              name = "stuff";
-              paths = [ ./stuff ];
-              runAsRoot =
-                pkgs.lib.optionalString (!config.krita) ''
-                  rm -f /bin/determination-krita-*
-                  rm -f /bin/.determination-krita-*
-                ''
-                + pkgs.lib.optionalString (!config.ardour) ''
-                  rm -f /bin/determination-ardour-*
-                  rm -f /bin/.determination-ardour-*
-                '';
-              pathsToLink = [ "/root/.config/ardour8" ];
-            }
-          ];
+        layers = [
+          {
+            name = "base";
+            paths = [
+              pkgs.bashInteractive
+              pkgs.coreutils
+              pkgs.getopt
+            ];
+            runAsRoot = pkgs.dockerTools.shadowSetup;
+          }
+          {
+            name = "renderer";
+            paths = [
+              (pkgs.callPackage ./pkgs/determination-renderer { })
+              pkgs.flac
+              (pkgs.callPackage ./pkgs/jack2 { })
+            ];
+          }
+          {
+            name = "calf";
+            paths = [ (pkgs.callPackage ./pkgs/calf { }) ];
+            pathsToLink = [
+              "/lib/calf"
+              "/lib/lv2"
+            ];
+          }
+          {
+            name = "zynaddsubfx";
+            paths = [ (pkgs.callPackage ./pkgs/zynaddsubfx { }) ];
+            pathsToLink = [ "/lib/lv2" ];
+          }
+          {
+            name = "scripts";
+            paths = [ (pkgs.callPackage ./pkgs/determination-export { }) ];
+          }
+        ];
       };
     in
     {

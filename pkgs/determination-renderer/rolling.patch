@@ -1,0 +1,25 @@
+# Determination - Deterministic rendering environment for white-axe's music
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# With this patch, audio plugins in Carla do not process unless the JACK
+# transport is rolling. Many synthesizers and effects plugins produce slightly
+# different outputs depending on how many audio samples they've received since
+# initialization, e.g. because they use LFO. This patch helps by ensuring that
+# the number of audio samples received by a certain timecode is consistent each
+# time, avoiding an entire class of nondeterminisms!
+
+--- a/source/backend/engine/CarlaEngineJack.cpp
++++ b/source/backend/engine/CarlaEngineJack.cpp
+@@ -4409,7 +4409,7 @@ private:
+ 
+         CarlaEngineJack* const engine((CarlaEngineJack*)plugin->getEngine());
+         CARLA_SAFE_ASSERT_RETURN(engine != nullptr, 0);
+-
++        if (jackbridge_transport_query(engine->fClient, NULL) != JackTransportRolling) return 0; // Don't send anything to audio plugins unless JACK transport is rolling
+         if (plugin->tryLock(engine->fFreewheel))
+         {
+             plugin->initBuffers();
