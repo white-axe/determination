@@ -132,13 +132,13 @@ bool render(char *projectPath) {
             return true;
         case PipeFail:
             error = "Broken pipe";
-            return false;
+            break;
         case SemFail:
             error = "Failed to post semaphore";
-            return false;
+            break;
     }
 
-    // Unreachable
+    return false;
 }
 
 int main(int argc, char **argv) {
