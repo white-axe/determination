@@ -80,11 +80,11 @@ int process(jack_nframes_t nframes, void *_null) {
         // NOTE: Assumes the CPU is little-endian
         int32_t sample;
 
-        sample = std::roundf(std::clamp(*(samplesL++), -1.0f, 1.0f) * 8388607.0f);
+        sample = std::lround(std::clamp((double)*(samplesL++) * 8388608., -8388608., 8388607.));
         std::memcpy(buffer, &sample, 3);
         buffer += 3;
 
-        sample = std::roundf(std::clamp(*(samplesR++), -1.0f, 1.0f) * 8388607.0f);
+        sample = std::lround(std::clamp((double)*(samplesR++) * 8388608., -8388608., 8388607.));
         std::memcpy(buffer, &sample, 3);
         buffer += 3;
     }
