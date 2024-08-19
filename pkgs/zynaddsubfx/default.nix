@@ -39,4 +39,7 @@ pkgs.stdenv.mkDerivation {
     "-DGuiModule=off"
     "-DOssEnable=OFF"
   ];
+  postInstall = ''
+    rm -r "$out/lib/lv2/ZynAddSubFX.lv2presets"
+  '';
 }

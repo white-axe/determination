@@ -29,4 +29,8 @@ pkgs.stdenv.mkDerivation {
     pkgs.glib
     pkgs.lv2
   ];
+  postInstall = ''
+    rm -r "$out/share/doc"
+    rm -r "$out/share/calf/styles"
+  '';
 }
