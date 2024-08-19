@@ -35,7 +35,6 @@ pkgs.stdenv.mkDerivation {
   src = ./src;
   nativeBuildInputs = [
     pkgs.cmake
-    pkgs.makeWrapper
     pkgs.pkg-config
   ];
   buildInputs = [ (pkgs.callPackage ../jack2 { }) ];
