@@ -20,11 +20,10 @@ sem_t semaphore;
 enum State {
     Ok,
     PipeFail,
-    SemFail,
 };
 std::atomic<State> state;
 
-char buf[49152]; // Large enough for a JACK buffer size of 8192
+char buf[6 * 8192]; // Large enough for a JACK buffer size of 8192
 
 CarlaHostHandle handle;
 FILE *pipeFile;
@@ -47,8 +46,7 @@ void determination_set_process_callback(CarlaHostHandle handle, JackProcessCallb
 void stop_and_post(State val) {
     jackbridge_transport_stop(client);
     state.store(val);
-    if (sem_post(&semaphore))
-        state.store(SemFail);
+    sem_post(&semaphore);
 }
 
 int process(jack_nframes_t nframes, void *_null) {
@@ -72,8 +70,8 @@ int process(jack_nframes_t nframes, void *_null) {
     }
 
     // Get the data we received on our input ports and copy to our internal buffer
-    float *samplesL = (float *)jackbridge_port_get_buffer(recorderL, nframes);
-    float *samplesR = (float *)jackbridge_port_get_buffer(recorderR, nframes);
+    const float *samplesL = (float *)jackbridge_port_get_buffer(recorderL, nframes);
+    const float *samplesR = (float *)jackbridge_port_get_buffer(recorderR, nframes);
     char *buffer = buf;
     for (jack_nframes_t i = 0; i < nframes; ++i) {
         // Get a sample from each channel and convert them from 32-bit floating point to signed 24-bit integer
@@ -120,11 +118,11 @@ bool render(char *projectPath) {
 
     // Block this thread until `process()` posts to the semaphore
     std::cerr << "[determination-renderer] Rendering audio" << std::endl;
-    if (sem_wait(&semaphore)) {
-        error = "Failed to wait for semaphore to be posted";
-        jackbridge_transport_stop(client);
-        state.store(SemFail);
-        return false;
+    while (sem_wait(&semaphore)) {
+        // If a signal handler is called while `sem_wait()` is waiting,
+        // `sem_wait()` may stop waiting and return with a nonzero return value after the signal handler returns.
+        // We actually want to continue waiting for the semaphore to be posted in that case,
+        // hence why we're spinning here.
     }
 
     switch (state.load()) {
@@ -132,9 +130,6 @@ bool render(char *projectPath) {
             return true;
         case PipeFail:
             error = "Broken pipe";
-            break;
-        case SemFail:
-            error = "Failed to post semaphore";
             break;
     }
 
