@@ -43,10 +43,14 @@ const char *error = NULL;
 jack_client_t *determination_get_jack_client(CarlaHostHandle handle);
 void determination_set_process_callback(CarlaHostHandle handle, JackProcessCallback callback, void *arg);
 
-void stop_and_post(State val) {
+inline void stop_and_post(State val) {
     jackbridge_transport_stop(client);
     state.store(val);
     sem_post(&semaphore);
+}
+
+inline int32_t convert_sample(float sample) {
+    return std::isnan(sample) ? 0 : std::lround(std::clamp((double)sample * 8388608., -8388608., 8388607.));
 }
 
 int process(jack_nframes_t nframes, void *_null) {
@@ -78,11 +82,11 @@ int process(jack_nframes_t nframes, void *_null) {
         // NOTE: Assumes the CPU is little-endian
         int32_t sample;
 
-        sample = std::lround(std::clamp((double)*(samplesL++) * 8388608., -8388608., 8388607.));
+        sample = convert_sample(*(samplesL++));
         std::memcpy(buffer, &sample, 3);
         buffer += 3;
 
-        sample = std::lround(std::clamp((double)*(samplesR++) * 8388608., -8388608., 8388607.));
+        sample = convert_sample(*(samplesR++));
         std::memcpy(buffer, &sample, 3);
         buffer += 3;
     }
@@ -167,7 +171,12 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    bool ok = render(argv[1]);
+    bool ok;
+    try {
+        ok = render(argv[1]);
+    } catch (...) {
+        ok = false;
+    }
     if (!ok)
         std::cerr << "\e[91m[determination-renderer] " << error << "\e[0m" << std::endl;
     else
