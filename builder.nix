@@ -4,13 +4,16 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-{ pkgs, imageName }:
+{ pkgs }:
 let
-  nul = pkgs.runCommandLocal "${imageName}-nul" { } ''
-    mkdir $out
-  '';
+  nul =
+    imageName:
+    pkgs.runCommandLocal "${imageName}-nul" { } ''
+      mkdir $out
+    '';
 
   mkLayer =
+    imageName:
     {
       name,
       paths,
@@ -38,7 +41,7 @@ let
     };
 
   cookLayer =
-    excludePathRegex: prevOutput:
+    imageName: excludePathRegex: prevOutput:
     { name, layer }:
     pkgs.runCommand "container-layer-${imageName}-${name}"
       {
@@ -49,12 +52,8 @@ let
         ];
         closure = pkgs.writeClosure [ layer ];
         layerName = name;
-        inherit
-          excludePathRegex
-          layer
-          nul
-          prevOutput
-          ;
+        nul = nul imageName;
+        inherit excludePathRegex layer prevOutput;
       }
       ''
         ls_tar() {
@@ -117,6 +116,7 @@ in
 {
   buildImage =
     {
+      imageName,
       layers,
       architecture,
       os,
@@ -127,7 +127,9 @@ in
     pkgs.runCommand "container-image-${imageName}.tar"
       {
         nativeBuildInputs = [ pkgs.jq ];
-        layers = pkgs.lib.foldl (cookLayer excludePathRegex) nul (builtins.map mkLayer layers);
+        layers = pkgs.lib.foldl (cookLayer imageName excludePathRegex) (nul imageName) (
+          builtins.map (mkLayer imageName) layers
+        );
         config = pkgs.writeText "${imageName}-config.json" (builtins.toJSON config);
         annotations = pkgs.writeText "${imageName}-annotations.json" (builtins.toJSON annotations);
         inherit architecture os;

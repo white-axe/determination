@@ -26,12 +26,10 @@
           })
         ];
       };
-      builder = import ./builder.nix {
-        inherit pkgs;
-        imageName = "determination";
-      };
+      builder = import ./builder.nix { inherit pkgs; };
       formatter = pkgs.nixfmt-rfc-style;
       image = builder.buildImage {
+        imageName = "determination";
         architecture = "amd64";
         os = "linux";
         annotations = {
