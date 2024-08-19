@@ -19,6 +19,7 @@ let
     patches = [
       ./expose.patch
       ./recorder.patch
+      ./resource-dir-assert.patch
       ./rolling.patch
       ./static.patch
     ];
