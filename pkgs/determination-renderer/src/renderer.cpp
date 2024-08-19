@@ -23,7 +23,7 @@ enum State {
 };
 std::atomic<State> state;
 
-char buf[6 * 8192]; // Large enough for a JACK buffer size of 8192
+uint8_t buf[6 * 8192]; // Large enough for a JACK buffer size of 8192
 
 CarlaHostHandle handle;
 FILE *pipeFile;
@@ -72,7 +72,7 @@ int process(jack_nframes_t nframes, void *_null) {
     // Get the data we received on our input ports and copy to our internal buffer
     const float *samplesL = (float *)jackbridge_port_get_buffer(recorderL, nframes);
     const float *samplesR = (float *)jackbridge_port_get_buffer(recorderR, nframes);
-    char *buffer = buf;
+    uint8_t *buffer = buf;
     for (jack_nframes_t i = 0; i < nframes; ++i) {
         // Get a sample from each channel and convert them from 32-bit floating point to signed 24-bit integer
         // NOTE: Assumes the CPU is little-endian
