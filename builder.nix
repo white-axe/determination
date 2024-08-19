@@ -38,7 +38,7 @@ let
     };
 
   cookLayer =
-    prevOutput:
+    excludePathRegex: prevOutput:
     { name, layer }:
     pkgs.runCommand "container-layer-${imageName}-${name}"
       {
@@ -49,7 +49,12 @@ let
         ];
         closure = pkgs.writeClosure [ layer ];
         layerName = name;
-        inherit layer nul prevOutput;
+        inherit
+          excludePathRegex
+          layer
+          nul
+          prevOutput
+          ;
       }
       ''
         ls_tar() {
@@ -76,7 +81,7 @@ let
         fi
         ls_tar layer.tar >> baseFiles
         while read dep; do
-          find "$dep" >> layerFiles
+          find "$dep" | grep -vE "$excludePathRegex" >> layerFiles
         done < "$closure"
         mkdir nix
         mkdir nix/store
@@ -117,11 +122,12 @@ in
       os,
       config,
       annotations,
+      excludePathRegex ? "$^",
     }:
     pkgs.runCommand "container-image-${imageName}.tar"
       {
         nativeBuildInputs = [ pkgs.jq ];
-        layers = pkgs.lib.foldl cookLayer nul (builtins.map mkLayer layers);
+        layers = pkgs.lib.foldl (cookLayer excludePathRegex) nul (builtins.map mkLayer layers);
         config = pkgs.writeText "${imageName}-config.json" (builtins.toJSON config);
         annotations = pkgs.writeText "${imageName}-annotations.json" (builtins.toJSON annotations);
         inherit architecture os;

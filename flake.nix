@@ -44,6 +44,7 @@
           Env = [ "PATH=/bin" ];
           Cmd = [ "/bin/bash" ];
         };
+        excludePathRegex = "^${pkgs.glibc}/share/i18n/locales/[^C]|^${pkgs.glib.out}/share/locale/|^${pkgs.bashInteractive}/share/locale/";
         layers = [
           {
             name = "base";
@@ -51,6 +52,7 @@
               pkgs.bashInteractive
               pkgs.coreutils
               pkgs.getopt
+              pkgs.glib
             ];
             runAsRoot = pkgs.dockerTools.shadowSetup;
           }
