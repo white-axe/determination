@@ -10,7 +10,7 @@
 # client runs in a different thread and they may process audio concurrently if
 # the JACK graph allows it. Calf uses `rand()` to generate random numbers which
 # isn't thread-local, so that can cause concurrency-related nondeterminism. This
-# patch adds a thread-safe reimplementation of `rand()` and `srand()` that
+# patch adds a thread-local reimplementation of `rand()` and `srand()` that
 # otherwise behaves identically. default.nix is responsible for substituting all
 # calls to the normal `rand()` and `srand()` with these ones.
 
