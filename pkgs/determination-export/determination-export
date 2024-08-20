@@ -81,7 +81,7 @@ if [ ! -p /.determination-renderer-pipe ]; then mkfifo /.determination-renderer-
 flac --force --force-raw-format --endian=little --channels=2 --bps=24 --sample-rate=48000 --sign=signed -o "$output" - < /.determination-renderer-pipe &
 
 >&2 echo '[determination-export] Starting up JACK'
-jackd -r -m -n "$JACK_DEFAULT_SERVER" -p 4096 -S -d dummy -C 0 -P 0 -r 48000 -p 256 &
+jackd -r -m -n "$JACK_DEFAULT_SERVER" -p 4096 -S -s -d dummy -C 0 -P 0 -r 48000 -p 256 &
 jack_pid=$!
 until [ -S "/dev/shm/jack_${JACK_DEFAULT_SERVER}_0_0" ]; do sleep 0.1; done
 sleep 0.5
