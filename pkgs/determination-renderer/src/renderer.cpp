@@ -12,8 +12,8 @@
 #include <cstring>
 #include <iostream>
 #include <semaphore.h>
-#include "source/jackbridge/JackBridge.hpp"
-#include "source/includes/CarlaNativePlugin.h"
+#include "carla/source/jackbridge/JackBridge.hpp"
+#include "carla/source/includes/CarlaNativePlugin.h"
 
 sem_t semaphore;
 

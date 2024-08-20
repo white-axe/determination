@@ -39,7 +39,9 @@ pkgs.stdenv.mkDerivation {
     pkgs.pkg-config
   ];
   buildInputs = [ (pkgs.callPackage ../jack2 { }) ];
-  cmakeFlags = [ "-DDETERMINATION_CARLA_PATH=${carla}" ];
+  preConfigure = ''
+    ln -s "${carla}" ./carla
+  '';
   buildPhase = ''
     cmake --build . -t determination-renderer -j $NIX_BUILD_CORES
   '';

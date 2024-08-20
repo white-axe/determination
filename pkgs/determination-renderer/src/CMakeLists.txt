@@ -7,11 +7,7 @@
 
 cmake_minimum_required(VERSION 3.15)
 project(determination-renderer)
-
-set(DETERMINATION_CARLA_PATH carla CACHE PATH "Path to Carla source code directory")
-add_subdirectory(${DETERMINATION_CARLA_PATH}/cmake carla)
-
+add_subdirectory(carla/cmake)
 add_executable(determination-renderer)
 target_link_libraries(determination-renderer PUBLIC carla::standalone jack)
-target_include_directories(determination-renderer PRIVATE ${DETERMINATION_CARLA_PATH})
 target_sources(determination-renderer PRIVATE renderer.cpp)
