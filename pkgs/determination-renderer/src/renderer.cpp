@@ -18,6 +18,9 @@
 sem_t semaphore;
 
 enum State {
+    WaitForRenderFinish,
+    WaitForFreewheelOn,
+    WaitForFreewheelOff,
     Ok,
     PipeFail,
 };
@@ -42,11 +45,23 @@ const char *error = NULL;
 
 jack_client_t *determination_get_jack_client(CarlaHostHandle handle);
 void determination_set_process_callback(CarlaHostHandle handle, JackProcessCallback callback, void *arg);
+bool determination_is_freewheel_enabled(CarlaHostHandle handle);
 
-inline void stop_and_post(State val) {
+inline void post(State val) {
     jackbridge_transport_stop(client);
     state.store(val);
     sem_post(&semaphore);
+}
+
+inline State wait(State val) {
+    state.store(val);
+    while (sem_wait(&semaphore)) {
+        // If a signal handler is called while `sem_wait()` is waiting,
+        // `sem_wait()` may stop waiting and return with a nonzero return value after the signal handler returns.
+        // We actually want to continue waiting for the semaphore to be posted in that case,
+        // hence why we're spinning here.
+    }
+    return state.load();
 }
 
 inline int32_t convert_sample(float sample) {
@@ -54,9 +69,20 @@ inline int32_t convert_sample(float sample) {
 }
 
 int process(jack_nframes_t nframes, void *_null) {
-    // Do nothing if rendering has stopped
-    if (state.load() != Ok)
-        return 0;
+    switch (state.load()) {
+        case WaitForRenderFinish:
+            break;
+        case WaitForFreewheelOn:
+            if (determination_is_freewheel_enabled(handle))
+                post(Ok);
+            return 0;
+        case WaitForFreewheelOff:
+            if (!determination_is_freewheel_enabled(handle))
+                post(Ok);
+            return 0;
+        default:
+            return 0;
+    }
 
     // Do nothing if JACK transport isn't playing
     jack_position_t pos;
@@ -69,7 +95,7 @@ int process(jack_nframes_t nframes, void *_null) {
 
     // Stop once the JACK transport has reached the end position
     if (pos.bar > endBar || (pos.bar == endBar && (pos.beat > endBeat || (pos.beat == endBeat && pos.tick >= endTick)))) {
-        stop_and_post(Ok);
+        post(Ok);
         return 0;
     }
 
@@ -93,7 +119,7 @@ int process(jack_nframes_t nframes, void *_null) {
 
     // Writing to the pipe isn't realtime-safe, but freewheeling should be enabled by now so it's fine
     if (std::fwrite(buf, 6, nframes, pipeFile) < nframes)
-        stop_and_post(PipeFail);
+        post(PipeFail);
 
     return 0;
 }
@@ -117,32 +143,27 @@ bool render(char *projectPath) {
     // Make JACK call `process()` every time new audio samples are available to be processed
     determination_set_process_callback(handle, process, NULL);
 
+    // Block this thread until `process()` detects that freewheeling is enabled
+    wait(WaitForFreewheelOn);
+
     std::cerr << "[determination-renderer] Starting JACK transport" << std::endl;
     carla_transport_play(handle);
 
-    // Block this thread until `process()` posts to the semaphore
+    // Block this thread until `process()` detects that the JACK transport has reached the end position or an error occurred
     std::cerr << "[determination-renderer] Rendering audio" << std::endl;
-    while (sem_wait(&semaphore)) {
-        // If a signal handler is called while `sem_wait()` is waiting,
-        // `sem_wait()` may stop waiting and return with a nonzero return value after the signal handler returns.
-        // We actually want to continue waiting for the semaphore to be posted in that case,
-        // hence why we're spinning here.
-    }
-
-    switch (state.load()) {
+    switch (wait(WaitForRenderFinish)) {
         case Ok:
             return true;
         case PipeFail:
             error = "Broken pipe";
-            break;
+            return false;
+        default:
+            return false;
     }
-
-    return false;
 }
 
 int main(int argc, char **argv) {
     std::cerr << "[determination-renderer] Initializing" << std::endl;
-    state.store(Ok);
     startBar = std::strtol(argv[2], NULL, 10);
     startBeat = std::strtol(argv[3], NULL, 10);
     startTick = std::strtol(argv[4], NULL, 10);
@@ -188,7 +209,15 @@ int main(int argc, char **argv) {
     // `carla_engine_close()` modifies the JACK graph,
     // which is not permitted when freewheeling is enabled,
     // so disable freewheeling first
-    jackbridge_set_freewheel(client, false);
+    std::cerr << "[determination-renderer] Disabling JACK freewheel mode" << std::endl;
+    if (jackbridge_set_freewheel(client, false)) {
+        std::cerr << "[determination-renderer] Failed to disable JACK freewheel mode" << std::endl;
+    } else {
+        // Block this thread until `process()` detects that freewheeling is disabled
+        wait(WaitForFreewheelOff);
+    }
+
+    std::cerr << "[determination-renderer] Cleaning up" << std::endl;
     carla_engine_close(handle);
 
     return ok ? 0 : 1;
