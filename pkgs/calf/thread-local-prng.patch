@@ -1,0 +1,180 @@
+# Determination - Deterministic rendering environment for white-axe's music
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# When there's more than one Calf instance in the same Carla project, Calf is
+# only started up once, but each instance gets its own JACK client. Each JACK
+# client runs in a different thread and they may process audio concurrently if
+# the JACK graph allows it. Calf uses `rand()` to generate random numbers which
+# isn't thread-local, so that can cause concurrency-related nondeterminism. This
+# patch replaces all calls to `rand()` and `srand()` with thread-local
+# reimplementations that otherwise behave identically.
+
+--- a/src/audio_fx.cpp
++++ b/src/audio_fx.cpp
+@@ -25,7 +25,7 @@
+ #include <stdlib.h>
+ #include <time.h>
+ #include <math.h>
+-
++#include <calf/utils.h>
+ using namespace calf_plugins;
+ using namespace dsp;
+ 
+@@ -942,7 +942,7 @@ transients::transients() {
+     lookpos         = 0;
+     channels        = 1;
+     sustain_ended   = false;
+-    srand(1);
++    determination_srand(1);
+ }
+ transients::~transients()
+ {
+@@ -980,7 +980,7 @@ void transients::calc_relfac()
+     relfac = pow(0.5f, 1.f / (0.001 * rel_time * srate));
+ }
+ void transients::process(float *in, float s) {
+-    s = fabs(s) + 1e-10f * ((float)rand() / (float)RAND_MAX);
++    s = fabs(s) + 1e-10f * ((float)determination_rand() / (float)RAND_MAX);
+     // fill lookahead buffer
+     for (int i = 0; i < channels; i++) {
+         lookbuf[lookpos + i] = in[i];
+--- a/src/calf/utils.h
++++ b/src/calf/utils.h
+@@ -211,3 +211,6 @@ std::vector <direntry> list_directory(const std::string &path);
+ };
+ 
+ #endif
++
++int determination_rand();
++void determination_srand(unsigned int seed);
+--- a/src/ctl_phasegraph.cpp
++++ b/src/ctl_phasegraph.cpp
+@@ -20,7 +20,7 @@
+  */
+  
+ #include <calf/ctl_phasegraph.h>
+-
++#include <calf/utils.h>
+ using namespace calf_plugins;
+ using namespace dsp;
+ 
+@@ -84,7 +84,7 @@ calf_phase_graph_copy_surface(cairo_t *ctx, cairo_surface_t *source, int x = 0,
+     cairo_save(ctx);
+     cairo_set_source_surface(ctx, source, x, y);
+     if (fade < 1.0) {
+-        float rnd = (float)rand() / (float)RAND_MAX / 100;
++        float rnd = (float)determination_rand() / (float)RAND_MAX / 100;
+         cairo_paint_with_alpha(ctx, fade * 0.35 + 0.05 + rnd);
+     } else {
+         cairo_paint(ctx);
+--- a/src/modules_dist.cpp
++++ b/src/modules_dist.cpp
+@@ -956,8 +956,8 @@ uint32_t tapesimulator_audio_module::process(uint32_t offset, uint32_t numsample
+             
+             // noise
+             if (*params[param_noise]) {
+-                float Lnoise = rand() % 2 - 1;
+-                float Rnoise = rand() % 2 - 1;
++                float Lnoise = determination_rand() % 2 - 1;
++                float Rnoise = determination_rand() % 2 - 1;
+                 Lnoise = noisefilters[0][2].process(noisefilters[0][1].process(noisefilters[0][0].process(Lnoise)));
+                 Rnoise = noisefilters[1][2].process(noisefilters[1][1].process(noisefilters[1][0].process(Rnoise)));
+                 L += Lnoise * *params[param_noise] / 12.f;
+--- a/src/modules_filter.cpp
++++ b/src/modules_filter.cpp
+@@ -1210,8 +1210,8 @@ uint32_t vocoder_audio_module::process(uint32_t offset, uint32_t numsamples, uin
+             double mR = ins[3][offset] * *params[param_mod_in];
+             
+             // noise generator
+-            double nL = (float)rand() / (float)RAND_MAX;
+-            double nR = (float)rand() / (float)RAND_MAX;
++            double nL = (float)determination_rand() / (float)RAND_MAX;
++            double nR = (float)determination_rand() / (float)RAND_MAX;
+             
+             for (int i = 0; i < bands; i++) {
+                 double mL_ = mL;
+--- a/src/monosynth.cpp
++++ b/src/monosynth.cpp
+@@ -20,7 +20,7 @@
+  */
+ #include <calf/giface.h>
+ #include <calf/modules_synths.h>
+-
++#include <calf/utils.h>
+ using namespace dsp;
+ using namespace calf_plugins;
+ using namespace std;
+@@ -418,7 +418,7 @@ void monosynth_audio_module::delayed_note_on()
+         if (legato >= 2)
+             porta_time = -1.f;
+         last_xfade = xfade;
+-        unison_osc.phase = rand() << 16;
++        unison_osc.phase = determination_rand() << 16;
+         osc1.reset();
+         osc2.reset();
+         filter.reset();
+@@ -444,8 +444,8 @@ void monosynth_audio_module::delayed_note_on()
+             break;
+         case 5:
+             // rand() is crap, but I don't have any better RNG in Calf yet
+-            osc1.phase = rand() << 16;
+-            osc2.phase = rand() << 16;
++            osc1.phase = determination_rand() << 16;
++            osc2.phase = determination_rand() << 16;
+             break;
+         default:
+             break;
+--- a/src/organ.cpp
++++ b/src/organ.cpp
+@@ -24,7 +24,7 @@
+ #include <calf/organ.h>
+ #include <iostream>
+ #include <algorithm>
+-
++#include <calf/utils.h>
+ using namespace std;
+ using namespace dsp;
+ using namespace calf_plugins;
+@@ -212,7 +212,7 @@ static void padsynth(bandlimiter<ORGAN_WAVE_BITS> blSrc, bandlimiter<ORGAN_BIG_W
+         }
+     }
+     for (int i = 1; i <= ORGAN_BIG_WAVE_SIZE / 2; i++) {
+-        float phase = M_PI * 2 * (rand() & 255) / 256;
++        float phase = M_PI * 2 * (determination_rand() & 255) / 256;
+         complex<float> shift = complex<float>(cos(phase), sin(phase));
+         blDest.spectrum[i] *= shift;        
+ //      printf("@%d = %f\n", i, abs(blDest.spectrum[i]));
+--- a/src/utils.cpp
++++ b/src/utils.cpp
+@@ -202,3 +202,27 @@ vector <direntry> list_directory(const string &path)
+ }
+ #endif
+ }
++
++static thread_local random_data determination_prng_buf;
++static thread_local char determination_prng_statebuf[128];
++static thread_local bool determination_prng_initialized = false;
++
++static inline void determination_prng_initialize() {
++    if (!determination_prng_initialized) {
++        determination_prng_buf.state = NULL;
++        initstate_r(1, determination_prng_statebuf, 128, &determination_prng_buf);
++        determination_prng_initialized = true;
++    }
++}
++
++int determination_rand() {
++    determination_prng_initialize();
++    int32_t result;
++    random_r(&determination_prng_buf, &result);
++    return result;
++}
++
++void determination_srand(unsigned int seed) {
++    determination_prng_initialize();
++    srandom_r(seed, &determination_prng_buf);
++}

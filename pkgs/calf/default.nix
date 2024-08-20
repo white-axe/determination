@@ -17,7 +17,10 @@ pkgs.stdenv.mkDerivation {
     rev = version;
     hash = "sha256-V2TY1xmV223cnc6CxaTuvLHqocVVIkQlbSI6Z0VTH00=";
   };
-  patches = [ ./fpu.patch ];
+  patches = [
+    ./fpu.patch
+    ./thread-local-prng.patch
+  ];
   nativeBuildInputs = [
     pkgs.autoreconfHook
     pkgs.pkg-config
