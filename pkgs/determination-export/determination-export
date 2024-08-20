@@ -77,8 +77,8 @@ if [ -S "/dev/shm/jack_${JACK_DEFAULT_SERVER}_0_0" ]; then
 fi
 
 >&2 echo '[determination-export] Starting up FLAC'
-if [ ! -p /determination-renderer-pipe ]; then mkfifo /determination-renderer-pipe; fi
-flac --force --force-raw-format --endian=little --channels=2 --bps=24 --sample-rate=48000 --sign=signed -o "$output" - < /determination-renderer-pipe &
+if [ ! -p /.determination-renderer-pipe ]; then mkfifo /.determination-renderer-pipe; fi
+flac --force --force-raw-format --endian=little --channels=2 --bps=24 --sample-rate=48000 --sign=signed -o "$output" - < /.determination-renderer-pipe &
 
 >&2 echo '[determination-export] Starting up JACK'
 jackd -r -m -n "$JACK_DEFAULT_SERVER" -p 4096 -d dummy -C 0 -P 0 -r 48000 -p 256 &

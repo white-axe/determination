@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
     recorderR = jackbridge_port_by_name(client, "DeterminationRenderer:RecorderR");
 
     std::cerr << "[determination-renderer] Opening pipe for writing PCM data" << std::endl;
-    if ((pipeFile = std::fopen("/determination-renderer-pipe", "a")) == NULL) {
+    if ((pipeFile = std::fopen("/.determination-renderer-pipe", "a")) == NULL) {
         std::cerr << "\e[91m[determination-renderer] Failed to open pipe\e[0m" << std::endl;
         carla_engine_close(handle);
         return 1;
