@@ -32,6 +32,10 @@ pkgs.stdenv.mkDerivation {
     pkgs.glib
     pkgs.lv2
   ];
+  postPatch = ''
+    # Replace all calls to `rand()` with `determination_rand()` and all calls to `srand()` with `determination_srand()`
+    find src -type f \( -name '*.c' -o -name '*.cpp' -o -name '*.h' -o -name '*.hpp' \) -exec bash -c "echo -e '\n#include <calf/determination_prng.h>\n' >> {} && sed -i 's/\b\(rand\|srand\)\b/determination_\1/g' {}" \;
+  '';
   postInstall = ''
     rm -r "$out/share/doc"
     rm -r "$out/share/calf/styles"
