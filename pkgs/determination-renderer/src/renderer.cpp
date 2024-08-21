@@ -15,7 +15,7 @@
 #include "carla/source/jackbridge/JackBridge.hpp"
 #include "carla/source/includes/CarlaNativePlugin.h"
 
-sem_t semaphore;
+static sem_t semaphore;
 
 enum State {
     WaitForRenderFinish,
@@ -24,24 +24,24 @@ enum State {
     Ok,
     PipeFail,
 };
-std::atomic<State> state;
+static std::atomic<State> state;
 
-uint8_t buf[6 * 8192]; // Large enough for a JACK buffer size of 8192
+static uint8_t buf[6 * 8192]; // Large enough for a JACK buffer size of 8192
 
-CarlaHostHandle handle;
-FILE *pipeFile;
-jack_client_t *client;
-jack_port_t *recorderL;
-jack_port_t *recorderR;
+static CarlaHostHandle handle;
+static FILE *pipeFile;
+static jack_client_t *client;
+static jack_port_t *recorderL;
+static jack_port_t *recorderR;
 
-int32_t startBar;
-int32_t startBeat;
-int32_t startTick;
-int32_t endBar;
-int32_t endBeat;
-int32_t endTick;
+static int32_t startBar;
+static int32_t startBeat;
+static int32_t startTick;
+static int32_t endBar;
+static int32_t endBeat;
+static int32_t endTick;
 
-const char *error = NULL;
+static const char *error = NULL;
 
 jack_client_t *determination_get_jack_client(CarlaHostHandle handle);
 void determination_set_process_callback(CarlaHostHandle handle, JackProcessCallback callback, void *arg);
@@ -68,7 +68,7 @@ inline int32_t convert_sample(float sample) {
     return std::isnan(sample) ? 0 : std::lround(std::clamp((double)sample * 8388608., -8388608., 8388607.));
 }
 
-int process(jack_nframes_t nframes, void *_null) {
+static int process(jack_nframes_t nframes, void *_null) {
     switch (state.load()) {
         case WaitForRenderFinish:
             break;
@@ -124,7 +124,7 @@ int process(jack_nframes_t nframes, void *_null) {
     return 0;
 }
 
-bool render(char *projectPath) {
+static bool render(char *projectPath) {
     std::cerr << "[determination-renderer] Loading \"" << projectPath << "\"" << std::endl;
     if (!carla_load_project(handle, projectPath)) {
         error = carla_get_last_error(handle);
@@ -192,12 +192,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    bool ok;
-    try {
-        ok = render(argv[1]);
-    } catch (...) {
-        ok = false;
-    }
+    bool ok = render(argv[1]);
     if (!ok)
         std::cerr << "\e[91m[determination-renderer] " << error << "\e[0m" << std::endl;
     else
