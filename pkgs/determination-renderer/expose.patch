@@ -13,15 +13,36 @@
 
 --- a/source/backend/engine/CarlaEngineJack.cpp
 +++ b/source/backend/engine/CarlaEngineJack.cpp
+@@ -1,6 +1,6 @@
+ ﻿// SPDX-FileCopyrightText: 2011-2024 Filipe Coelho <falktx@falktx.com>
+ // SPDX-License-Identifier: GPL-2.0-or-later
+-
++#include <atomic>
+ #include "CarlaEngineClient.hpp"
+ #include "CarlaEngineInit.hpp"
+ #include "CarlaEngineInternal.hpp"
 @@ -1324,7 +1324,7 @@ class CarlaEngineJack : public CarlaEngine
                        , private CarlaThread
  #endif
  {
 -public:
-+public: jack_client_t *determination_get_jack_client() { return fClient; } void determination_set_process_callback(JackProcessCallback callback, void *arg) { fCallback = callback; fCallbackArg = arg; } bool determination_is_freewheel_enabled() { return fFreewheel; }
++public: jack_client_t *determination_get_jack_client() { return fClient; } void determination_set_process_callback(void (*callback)(jack_nframes_t, bool)) { fCallback.store(callback); }
      CarlaEngineJack()
          : CarlaEngine(),
  #ifndef BUILD_BRIDGE
+@@ -1351,10 +1351,10 @@ public:
+           fLastPatchbaySetGroupPos(),
+           fPostPonedEvents(),
+           fPostPonedEventsMutex(),
++          fCallback(nullptr),
+           fIsInternalClient(false)
+ #endif
+-    {
+-        carla_debug("CarlaEngineJack::CarlaEngineJack()");
++    { carla_debug("CarlaEngineJack::CarlaEngineJack()");
+ 
+ #ifdef BUILD_BRIDGE
+         pData->options.processMode = ENGINE_PROCESS_MODE_MULTIPLE_CLIENTS;
 @@ -2841,8 +2841,8 @@ protected:
          offlineModeChanged(isFreewheel);
      }
@@ -29,7 +50,7 @@
 -    void handleJackProcessCallback(const uint32_t nframes)
 -    {
 +    void handleJackProcessCallback(const uint32_t nframes) {
-+        if (fCallback != NULL) fCallback(nframes, fCallbackArg); // Call the callback set by `determination_set_process_callback()`
++        void (*callback)(jack_nframes_t, bool) = fCallback.load(); if (callback != nullptr) callback(nframes, fFreewheel); // Call the callback set by `determination_set_process_callback()`
          const PendingRtEventsRunner prt(this, nframes);
  
          CARLA_SAFE_ASSERT_INT2_RETURN(nframes == pData->bufferSize, nframes, pData->bufferSize,);
@@ -38,11 +59,11 @@
      bool fExternalPatchbayOsc;
      bool fFreewheel;
 -
-+    JackProcessCallback fCallback; void *fCallbackArg;
++    std::atomic<void (*)(jack_nframes_t, bool)> fCallback;
      CarlaString fClientName;
      CarlaRecursiveMutex fThreadSafeMetadataMutex;
  
-@@ -4562,3 +4562,17 @@ void jack_finish(void *arg)
+@@ -4562,3 +4562,13 @@ void jack_finish(void *arg)
  
  // -----------------------------------------------------------------------
  #endif // defined(JACKBRIDGE_DIRECT) && !defined(BUILD_BRIDGE)
@@ -53,10 +74,6 @@
 +    return ((CarlaBackend::CarlaEngineJack *)(((CarlaHostStandalone *)handle)->engine))->determination_get_jack_client();
 +}
 +
-+void determination_set_process_callback(CarlaHostHandle handle, JackProcessCallback callback, void *arg) {
-+    ((CarlaBackend::CarlaEngineJack *)(((CarlaHostStandalone *)handle)->engine))->determination_set_process_callback(callback, arg);
-+}
-+
-+bool determination_is_freewheel_enabled(CarlaHostHandle handle) {
-+    return ((CarlaBackend::CarlaEngineJack *)(((CarlaHostStandalone *)handle)->engine))->determination_is_freewheel_enabled();
++void determination_set_process_callback(CarlaHostHandle handle, void (*callback)(jack_nframes_t, bool)) {
++    ((CarlaBackend::CarlaEngineJack *)(((CarlaHostStandalone *)handle)->engine))->determination_set_process_callback(callback);
 +}

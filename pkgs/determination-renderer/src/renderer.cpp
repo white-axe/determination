@@ -44,7 +44,7 @@ static int32_t endTick;
 static const char *error = NULL;
 
 jack_client_t *determination_get_jack_client(CarlaHostHandle handle);
-void determination_set_process_callback(CarlaHostHandle handle, JackProcessCallback callback, void *arg);
+void determination_set_process_callback(CarlaHostHandle handle, void (*callback)(jack_nframes_t, bool));
 bool determination_is_freewheel_enabled(CarlaHostHandle handle);
 
 inline void post(State val) {
@@ -68,35 +68,35 @@ inline int32_t convert_sample(float sample) {
     return std::isnan(sample) ? 0 : std::lround(std::clamp((double)sample * 8388608., -8388608., 8388607.));
 }
 
-static int process(jack_nframes_t nframes, void *_null) {
+static void process(jack_nframes_t nframes, bool freewheel) {
     switch (state.load()) {
         case WaitForRenderFinish:
             break;
         case WaitForFreewheelOn:
-            if (determination_is_freewheel_enabled(handle))
+            if (freewheel)
                 post(Ok);
-            return 0;
+            return;
         case WaitForFreewheelOff:
-            if (!determination_is_freewheel_enabled(handle))
+            if (!freewheel)
                 post(Ok);
-            return 0;
+            return;
         default:
-            return 0;
+            return;
     }
 
     // Do nothing if JACK transport isn't playing
     jack_position_t pos;
     if (jackbridge_transport_query(client, &pos) != JackTransportRolling)
-        return 0;
+        return;
 
     // Do nothing if JACK transport hasn't reached the start position yet
     if (pos.bar < startBar || (pos.bar == startBar && (pos.beat < startBeat || (pos.beat == startBeat && pos.tick < startTick))))
-        return 0;
+        return;
 
     // Stop once the JACK transport has reached the end position
     if (pos.bar > endBar || (pos.bar == endBar && (pos.beat > endBeat || (pos.beat == endBeat && pos.tick >= endTick)))) {
         post(Ok);
-        return 0;
+        return;
     }
 
     // Get the data we received on our input ports and copy to our internal buffer
@@ -120,8 +120,6 @@ static int process(jack_nframes_t nframes, void *_null) {
     // Writing to the pipe isn't realtime-safe, but freewheeling should be enabled by now so it's fine
     if (std::fwrite(buf, 6, nframes, pipeFile) < nframes)
         post(PipeFail);
-
-    return 0;
 }
 
 static bool render(char *projectPath) {
@@ -141,7 +139,7 @@ static bool render(char *projectPath) {
     }
 
     // Make JACK call `process()` every time new audio samples are available to be processed
-    determination_set_process_callback(handle, process, NULL);
+    determination_set_process_callback(handle, process);
 
     // Block this thread until `process()` detects that freewheeling is enabled
     wait(WaitForFreewheelOn);
@@ -198,9 +196,6 @@ int main(int argc, char **argv) {
     else
         std::cerr << "[determination-renderer] Rendering finished!" << std::endl;
 
-    sem_destroy(&semaphore);
-    std::fclose(pipeFile);
-
     // `carla_engine_close()` modifies the JACK graph,
     // which is not permitted when freewheeling is enabled,
     // so disable freewheeling first
@@ -213,6 +208,8 @@ int main(int argc, char **argv) {
     }
 
     std::cerr << "[determination-renderer] Cleaning up" << std::endl;
+    sem_destroy(&semaphore);
+    std::fclose(pipeFile);
     carla_engine_close(handle);
 
     return ok ? 0 : 1;
