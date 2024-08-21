@@ -17,7 +17,6 @@ pkgs.stdenv.mkDerivation {
     rev = "v${version}";
     sha256 = "sha256-Cslfys5fcZDy0oee9/nM5Bd1+Cg4s/ayXjJJOSQCL4E=";
   };
-  patches = [ ./fpu.patch ];
   nativeBuildInputs = [
     pkgs.pkg-config
     pkgs.python3
