@@ -6,8 +6,7 @@
 # (at your option) any later version.
 
 # This causes Carla's JACK engine to expose some custom extra functions:
-# `determination_get_jack_client`, `determination_set_process_callback` and
-# `determination_is_freewheel_enabled`.
+# `determination_get_jack_client` and `determination_set_process_callback`.
 # We need these to implement our renderer. I can't think of any other way to
 # implement this functionality without them.
 

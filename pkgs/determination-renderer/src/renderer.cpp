@@ -45,7 +45,6 @@ static const char *error = NULL;
 
 jack_client_t *determination_get_jack_client(CarlaHostHandle handle);
 void determination_set_process_callback(CarlaHostHandle handle, void (*callback)(jack_nframes_t, bool));
-bool determination_is_freewheel_enabled(CarlaHostHandle handle);
 
 inline void post(State val) {
     jackbridge_transport_stop(client);
