@@ -38,6 +38,10 @@ usage () {
   >&2 echo '                              (default: 1)'
   >&2 echo '    --end-tick <integer>      Tick-within-beat at which to stop rendering audio'
   >&2 echo '                              (default: 0)'
+  >&2 echo '    -r/--rate <integer>       Audio sample rate in hertz'
+  >&2 echo '                              (default: 48000)'
+  >&2 echo '    -b/--buffer <integer>     Audio buffer size in samples'
+  >&2 echo '                              (default: 256)'
   >&2 echo ''
 }
 
@@ -49,8 +53,10 @@ start_tick='0'
 end_bar='101'
 end_beat='1'
 end_tick='0'
+rate='48000'
+buffer='256'
 
-opts=$(getopt -n determination-export -o ho:s:e: -l help,output:,start-bar:,start-beat:,start-tick:,end-bar:,end-beat:,end-tick: -- "$@")
+opts=$(getopt -n determination-export -o ho:s:e:r:b: -l help,output:,start-bar:,start-beat:,start-tick:,end-bar:,end-beat:,end-tick:,rate:,buffer: -- "$@")
 eval set -- "$opts"
 while true; do
   case "$1" in
@@ -63,6 +69,8 @@ while true; do
     -e|--end-bar) end_bar="$2"; shift ;;
     --end-beat) end_beat="$2"; shift ;;
     --end-tick) end_tick="$2"; shift ;;
+    -r|--rate) rate="$2"; shift ;;
+    -b|--buffer) buffer="$2"; shift ;;
     *) break ;;
   esac
   shift
@@ -78,10 +86,10 @@ fi
 
 >&2 echo '[determination-export] Starting up FLAC'
 if [ ! -p /.determination-renderer-pipe ]; then mkfifo /.determination-renderer-pipe; fi
-flac --force --force-raw-format --endian=little --channels=2 --bps=24 --sample-rate=48000 --sign=signed -o "$output" - < /.determination-renderer-pipe &
+flac --force --force-raw-format --endian=little --channels=2 --bps=24 --sample-rate="$rate" --sign=signed -o "$output" - < /.determination-renderer-pipe &
 
 >&2 echo '[determination-export] Starting up JACK'
-jackd -r -m -n "$JACK_DEFAULT_SERVER" -p 4096 -S -s -d dummy -C 0 -P 0 -r 48000 -p 256 &
+jackd -r -m -n "$JACK_DEFAULT_SERVER" -p 4096 -S -s -d dummy -C 0 -P 0 -r "$rate" -p "$buffer" &
 jack_pid=$!
 until [ -S "/dev/shm/jack_${JACK_DEFAULT_SERVER}_0_0" ]; do sleep 0.1; done
 sleep 0.5
