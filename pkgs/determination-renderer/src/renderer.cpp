@@ -77,6 +77,10 @@ inline State wait(State val) {
     return wait();
 }
 
+inline void drain() {
+    while (sem_trywait(&semaphore) == 0 || errno != EAGAIN) { }
+}
+
 inline void update_progress(jack_position_t *pos, jack_time_t newElapsedTime) {
     // Locking a mutex isn't realtime-safe, but freewheeling should be enabled by now so it's fine
     mutex.lock();
@@ -229,7 +233,7 @@ inline bool render(char *projectPath) {
                 error = "Broken pipe";
                 return false;
             default:
-                return false;
+                break;
         }
         result = wait();
     }
@@ -271,6 +275,7 @@ int main(int argc, char **argv) {
         std::cerr << "\e[91m[determination-renderer] " << error << "\e[0m" << std::endl;
     else
         std::cerr << "[determination-renderer] Rendering finished!" << std::endl;
+    drain();
 
     // `carla_engine_close()` modifies the JACK graph,
     // which is not permitted when freewheeling is enabled,
