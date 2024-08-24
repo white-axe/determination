@@ -83,7 +83,7 @@
 -        /* stable state, just use one coeff */
 -        for(int i = 0; i < stages + 1; ++i)
 +            ++j;
-+            if (++freqbufoffset == buffersize) {
++            if (++freqbufoffset >= buffersize && freqbufoffset % 8 == 0) {
 +                freqbufoffset = 0;
 +                if (j != buffersize && !freq_smoothing.apply(freqbuf, (buffersize + 7) / 8, freq)) {
 +                    for (int i = 0; i < stages + 1; ++i)
