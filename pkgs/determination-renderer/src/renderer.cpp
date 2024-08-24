@@ -29,10 +29,14 @@ enum State {
 static std::atomic<State> state;
 
 static jack_time_t elapsedTime;
-static jack_position_t currentPos;
+static jack_nframes_t currentFrame;
+static int32_t currentBar;
+static int32_t currentBeat;
+static int32_t currentTick;
 static std::mutex mutex;
 
-static uint8_t buf[6 * 8192]; // Large enough for a JACK buffer size of 8192
+static uint8_t buf[6 * 682];
+static uint8_t *bufptr = buf;
 
 static CarlaHostHandle handle;
 static FILE *pipeFile;
@@ -85,7 +89,10 @@ inline void update_progress(jack_position_t *pos, jack_time_t newElapsedTime) {
     // Locking a mutex isn't realtime-safe, but freewheeling should be enabled by now so it's fine
     mutex.lock();
     elapsedTime = newElapsedTime;
-    currentPos = *pos;
+    currentFrame = pos->frame;
+    currentBar = pos->bar;
+    currentBeat = pos->beat;
+    currentTick = pos->tick;
     mutex.unlock();
 }
 
@@ -122,7 +129,9 @@ static void process(jack_nframes_t nframes, bool freewheel) {
     if (pos.bar > endBar || (pos.bar == endBar && (pos.beat > endBeat || (pos.beat == endBeat && pos.tick >= endTick)))) {
         jackbridge_transport_stop(client);
         update_progress(&pos, newElapsedTime);
-        post(Ok);
+        // Writing to the pipe isn't realtime-safe, but freewheeling should be enabled by now so it's fine
+        post(bufptr != buf && std::fwrite(buf, 1, bufptr - buf, pipeFile) < bufptr - buf ? PipeFail : Ok);
+        bufptr = buf;
         return;
     }
 
@@ -141,36 +150,39 @@ static void process(jack_nframes_t nframes, bool freewheel) {
     // Get the data we received on our input ports and copy to our internal buffer
     const float *samplesL = (float *)jackbridge_port_get_buffer(recorderL, nframes);
     const float *samplesR = (float *)jackbridge_port_get_buffer(recorderR, nframes);
-    uint8_t *buffer = buf;
     for (jack_nframes_t i = 0; i < nframes; ++i) {
         // Get a sample from each channel and convert them from 32-bit floating point to signed 24-bit integer
         // NOTE: Assumes the CPU is little-endian
         int32_t sample;
 
         sample = convert_sample(*(samplesL++));
-        std::memcpy(buffer, &sample, 3);
-        buffer += 3;
+        std::memcpy(bufptr, &sample, 3);
+        bufptr += 3;
 
         sample = convert_sample(*(samplesR++));
-        std::memcpy(buffer, &sample, 3);
-        buffer += 3;
-    }
+        std::memcpy(bufptr, &sample, 3);
+        bufptr += 3;
 
-    // Writing to the pipe isn't realtime-safe, but freewheeling should be enabled by now so it's fine
-    if (std::fwrite(buf, 6, nframes, pipeFile) < nframes) {
-        jackbridge_transport_stop(client);
-        update_progress(&pos, newElapsedTime);
-        post(PipeFail);
+        // Write to the pipe once the buffer is full
+        if (bufptr - buf >= sizeof buf) {
+            bufptr = buf;
+            // Writing to the pipe isn't realtime-safe, but freewheeling should be enabled by now so it's fine
+            if (std::fwrite(buf, 1, sizeof buf, pipeFile) < sizeof buf) {
+                jackbridge_transport_stop(client);
+                update_progress(&pos, newElapsedTime);
+                post(PipeFail);
+            }
+        }
     }
 }
 
 static void log_progress() {
     mutex.lock();
     jack_time_t elapsed = elapsedTime;
-    int32_t bar = currentPos.bar;
-    int32_t beat = currentPos.beat;
-    int32_t tick = currentPos.tick;
-    jack_nframes_t frame = currentPos.frame;
+    jack_nframes_t frame = currentFrame;
+    int32_t bar = currentBar;
+    int32_t beat = currentBeat;
+    int32_t tick = currentTick;
     mutex.unlock();
     bool shown = false;
     std::cerr << std::setfill('0') << "[determination-renderer]";
@@ -193,7 +205,7 @@ static void log_progress() {
     elapsed %= 1000000ll;
     std::cerr << ' ' << std::setfill('0') << std::setw(6) << elapsed << "us";
     std::cerr << "    " << std::setfill('0') << std::setw(3) << bar << '|' << std::setw(2) << beat << '|' << std::setw(4) << tick;
-    std::cerr << "    " << frame + 1 << " frames" << std::endl;
+    std::cerr << "    " << frame << " frames" << std::endl;
 }
 
 inline bool render(char *projectPath) {
