@@ -11,6 +11,8 @@
 #include <atomic>
 #include <cstring>
 #include <iostream>
+#include <iomanip>
+#include <mutex>
 #include <semaphore.h>
 #include "carla/source/jackbridge/JackBridge.hpp"
 #include "carla/source/includes/CarlaNativePlugin.h"
@@ -26,6 +28,10 @@ enum State {
 };
 static std::atomic<State> state;
 
+static jack_time_t elapsedTime;
+static jack_position_t currentPos;
+static std::mutex mutex;
+
 static uint8_t buf[6 * 8192]; // Large enough for a JACK buffer size of 8192
 
 static CarlaHostHandle handle;
@@ -40,20 +46,23 @@ static int32_t startTick;
 static int32_t endBar;
 static int32_t endBeat;
 static int32_t endTick;
+static jack_time_t progressDelay;
 
 static const char *error = NULL;
 
 jack_client_t *determination_get_jack_client(CarlaHostHandle handle);
 void determination_set_process_callback(CarlaHostHandle handle, void (*callback)(jack_nframes_t, bool));
 
-inline void post(State val) {
-    jackbridge_transport_stop(client);
-    state.store(val);
+inline void post() {
     sem_post(&semaphore);
 }
 
-inline State wait(State val) {
+inline void post(State val) {
     state.store(val);
+    post();
+}
+
+inline State wait() {
     while (sem_wait(&semaphore)) {
         // If a signal handler is called while `sem_wait()` is waiting,
         // `sem_wait()` may stop waiting and return with a nonzero return value after the signal handler returns.
@@ -61,6 +70,19 @@ inline State wait(State val) {
         // hence why we're spinning here.
     }
     return state.load();
+}
+
+inline State wait(State val) {
+    state.store(val);
+    return wait();
+}
+
+inline void update_progress(jack_position_t *pos, jack_time_t newElapsedTime) {
+    // Locking a mutex isn't realtime-safe, but freewheeling should be enabled by now so it's fine
+    mutex.lock();
+    elapsedTime = newElapsedTime;
+    currentPos = *pos;
+    mutex.unlock();
 }
 
 inline int32_t convert_sample(float sample) {
@@ -88,15 +110,29 @@ static void process(jack_nframes_t nframes, bool freewheel) {
     if (jackbridge_transport_query(client, &pos) != JackTransportRolling)
         return;
 
-    // Do nothing if JACK transport hasn't reached the start position yet
-    if (pos.bar < startBar || (pos.bar == startBar && (pos.beat < startBeat || (pos.beat == startBeat && pos.tick < startTick))))
-        return;
+    static jack_time_t startTime = pos.usecs;
+    static jack_time_t elapsedDelayIntervals = 0;
+    jack_time_t newElapsedTime = pos.usecs - startTime;
 
     // Stop once the JACK transport has reached the end position
     if (pos.bar > endBar || (pos.bar == endBar && (pos.beat > endBeat || (pos.beat == endBeat && pos.tick >= endTick)))) {
+        jackbridge_transport_stop(client);
+        update_progress(&pos, newElapsedTime);
         post(Ok);
         return;
     }
+
+    // Notify the main thread of our progress after a user-specified time has passed, but continue rendering
+    jack_time_t newElapsedDelayIntervals = newElapsedTime / progressDelay;
+    if (newElapsedDelayIntervals > elapsedDelayIntervals) {
+        elapsedDelayIntervals = newElapsedDelayIntervals;
+        update_progress(&pos, newElapsedTime);
+        post();
+    }
+
+    // Do nothing if JACK transport hasn't reached the start position yet
+    if (pos.bar < startBar || (pos.bar == startBar && (pos.beat < startBeat || (pos.beat == startBeat && pos.tick < startTick))))
+        return;
 
     // Get the data we received on our input ports and copy to our internal buffer
     const float *samplesL = (float *)jackbridge_port_get_buffer(recorderL, nframes);
@@ -117,12 +153,43 @@ static void process(jack_nframes_t nframes, bool freewheel) {
     }
 
     // Writing to the pipe isn't realtime-safe, but freewheeling should be enabled by now so it's fine
-    if (std::fwrite(buf, 6, nframes, pipeFile) < nframes)
+    if (std::fwrite(buf, 6, nframes, pipeFile) < nframes) {
+        jackbridge_transport_stop(client);
+        update_progress(&pos, newElapsedTime);
         post(PipeFail);
+    }
 }
 
-static bool render(char *projectPath) {
-    std::cerr << "[determination-renderer] Loading \"" << projectPath << "\"" << std::endl;
+static void log_progress() {
+    mutex.lock();
+    jack_time_t elapsed = elapsedTime;
+    bool shown = false;
+    std::cerr << std::setfill('0') << "[determination-renderer]";
+    if (elapsed >= 24ll * 60ll * 60ll * 1000000ll) {
+        shown = true;
+        std::cerr << ' ' << elapsed / (24ll * 60ll * 60ll * 1000000ll) << 'd';
+    }
+    elapsed %= 24ll * 60ll * 60ll * 1000000ll;
+    if (shown || elapsed >= 60ll * 60ll * 1000000ll) {
+        shown = true;
+        std::cerr << ' ' << std::setw(2) << elapsed / (60ll * 60ll * 1000000ll) << 'h';
+    }
+    elapsed %= 60ll * 60ll * 1000000ll;
+    if (shown || elapsed >= 60ll * 1000000ll) {
+        shown = true;
+        std::cerr << ' ' << std::setw(2) << elapsed / (60ll * 1000000ll) << 'm';
+    }
+    elapsed %= 60ll * 1000000ll;
+    std::cerr << ' ' << std::setw(2) << elapsed / 1000000ll << 's';
+    elapsed %= 1000000ll;
+    std::cerr << ' ' << std::setfill('0') << std::setw(6) << elapsed << "us";
+    std::cerr << "    " << std::setfill('0') << std::setw(3) << currentPos.bar << '|' << std::setw(2) << currentPos.beat << '|' << std::setw(4) << currentPos.tick;
+    std::cerr << "    " << currentPos.frame + 1 << " frames" << std::endl;
+    mutex.unlock();
+}
+
+inline bool render(char *projectPath) {
+    std::cerr << "[determination-renderer] Loading \"" << projectPath << '"' << std::endl;
     if (!carla_load_project(handle, projectPath)) {
         error = carla_get_last_error(handle);
         return false;
@@ -148,14 +215,23 @@ static bool render(char *projectPath) {
 
     // Block this thread until `process()` detects that the JACK transport has reached the end position or an error occurred
     std::cerr << "[determination-renderer] Rendering audio" << std::endl;
-    switch (wait(WaitForRenderFinish)) {
-        case Ok:
-            return true;
-        case PipeFail:
-            error = "Broken pipe";
-            return false;
-        default:
-            return false;
+    State result = wait(WaitForRenderFinish);
+    for (;;) {
+        switch (result) {
+            case WaitForRenderFinish:
+                log_progress();
+                break;
+            case Ok:
+                log_progress();
+                return true;
+            case PipeFail:
+                log_progress();
+                error = "Broken pipe";
+                return false;
+            default:
+                return false;
+        }
+        result = wait();
     }
 }
 
@@ -167,6 +243,7 @@ int main(int argc, char **argv) {
     endBar = std::strtol(argv[5], NULL, 10);
     endBeat = std::strtol(argv[6], NULL, 10);
     endTick = std::strtol(argv[7], NULL, 10);
+    progressDelay = std::strtoll(argv[8], NULL, 10);
     handle = carla_standalone_host_init();
     if (!carla_engine_init(handle, "JACK", "DeterminationRenderer")) {
         std::cerr << "\e[91m[determination-renderer] " << carla_get_last_error(handle) << "\e[0m" << std::endl;
