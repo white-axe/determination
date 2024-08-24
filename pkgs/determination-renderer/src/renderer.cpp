@@ -167,6 +167,11 @@ static void process(jack_nframes_t nframes, bool freewheel) {
 static void log_progress() {
     mutex.lock();
     jack_time_t elapsed = elapsedTime;
+    int32_t bar = currentPos.bar;
+    int32_t beat = currentPos.beat;
+    int32_t tick = currentPos.tick;
+    jack_nframes_t frame = currentPos.frame;
+    mutex.unlock();
     bool shown = false;
     std::cerr << std::setfill('0') << "[determination-renderer]";
     if (elapsed >= 24ll * 60ll * 60ll * 1000000ll) {
@@ -187,9 +192,8 @@ static void log_progress() {
     std::cerr << ' ' << std::setw(2) << elapsed / 1000000ll << 's';
     elapsed %= 1000000ll;
     std::cerr << ' ' << std::setfill('0') << std::setw(6) << elapsed << "us";
-    std::cerr << "    " << std::setfill('0') << std::setw(3) << currentPos.bar << '|' << std::setw(2) << currentPos.beat << '|' << std::setw(4) << currentPos.tick;
-    std::cerr << "    " << currentPos.frame + 1 << " frames" << std::endl;
-    mutex.unlock();
+    std::cerr << "    " << std::setfill('0') << std::setw(3) << bar << '|' << std::setw(2) << beat << '|' << std::setw(4) << tick;
+    std::cerr << "    " << frame + 1 << " frames" << std::endl;
 }
 
 inline bool render(char *projectPath) {
