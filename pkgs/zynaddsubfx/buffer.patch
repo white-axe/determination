@@ -1,0 +1,234 @@
+# Determination - Deterministic rendering environment for white-axe's music
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This patch allows ZynAddSubFX to work properly when the buffer size is not
+# divisible by 8 without changing ZynAddSubFX's outputs when the buffer size
+# is divisible by 8.
+
+--- a/src/DSP/AnalogFilter.cpp
++++ b/src/DSP/AnalogFilter.cpp
+@@ -37,7 +37,7 @@ AnalogFilter::AnalogFilter(unsigned char Ftype,
+       q(Fq),
+      gain(1.0),
+      recompute(true),
+-     freqbufsize(bufsize/8)
++     freqbufoffset(0), iseven(true)
+ {
+     for(int i = 0; i < 3; ++i)
+         coeff.c[i] = coeff.d[i] = oldCoeff.c[i] = oldCoeff.d[i] = 0.0f;
+@@ -358,7 +358,7 @@ inline void AnalogBiquadFilterB(const float coeff[5], float &src, float work[4])
+ 
+ void AnalogFilter::singlefilterout(float *smp, fstage &hist, float f, unsigned int bufsize)
+ {
+-    assert((buffersize % 8) == 0);
++
+ 
+     if ( recompute )
+     {
+@@ -377,15 +377,15 @@ void AnalogFilter::singlefilterout(float *smp, fstage &hist, float f, unsigned i
+     } else if(order == 2) {//Second order filter
+         const float coeff_[5] = {coeff.c[0], coeff.c[1], coeff.c[2],  coeff.d[1], coeff.d[2]};
+         float work[4]  = {hist.x1, hist.x2, hist.y1, hist.y2};
+-        for(unsigned int i = 0; i < bufsize; i+=8) {
+-            AnalogBiquadFilterA(coeff_, smp[i + 0], work);
+-            AnalogBiquadFilterB(coeff_, smp[i + 1], work);
+-            AnalogBiquadFilterA(coeff_, smp[i + 2], work);
+-            AnalogBiquadFilterB(coeff_, smp[i + 3], work);
+-            AnalogBiquadFilterA(coeff_, smp[i + 4], work);
+-            AnalogBiquadFilterB(coeff_, smp[i + 5], work);
+-            AnalogBiquadFilterA(coeff_, smp[i + 6], work);
+-            AnalogBiquadFilterB(coeff_, smp[i + 7], work);
++        for (unsigned int i = 0; i < bufsize; ++i) {
++            if (iseven) {
++                AnalogBiquadFilterA(coeff_, smp[i], work);
++            } else {
++                AnalogBiquadFilterB(coeff_, smp[i], work);
++            }
++
++
++            iseven = !iseven;
+         }
+         hist.x1 = work[0];
+         hist.x2 = work[1];
+@@ -394,29 +394,29 @@ void AnalogFilter::singlefilterout(float *smp, fstage &hist, float f, unsigned i
+     }
+ }
+ 
+-void AnalogFilter::filterout(float *smp)
+-{
+-    float freqbuf[freqbufsize];
+-
+-    if ( freq_smoothing.apply( freqbuf, freqbufsize, freq ) )
+-    {
+-        /* in transition, need to do fine grained interpolation */
+-        for(int i = 0; i < stages + 1; ++i)
+-            for(int j = 0; j < freqbufsize; ++j)
+-            {
+-                recompute = true;
+-                singlefilterout(&smp[j*8], history[i], freqbuf[j], 8);
++void AnalogFilter::filterout(float *smp) {
++    if (freqbufoffset != 0 || freq_smoothing.apply(freqbuf, (buffersize + 7) / 8, freq)) {
++        for (int j = 0; j < buffersize;) {
++            for (int i = 0; i < stages + 1; ++i) {
++                if (freqbufoffset % 8 == 0) { recompute = true; }
++                singlefilterout(&smp[j], history[i], freqbuf[freqbufoffset / 8], 1);
+             }
+-    }
+-    else
+-    {
+-        /* stable state, just use one coeff */
+-        for(int i = 0; i < stages + 1; ++i)
++            ++j;
++            if (++freqbufoffset == buffersize) {
++                freqbufoffset = 0;
++                if (j != buffersize && !freq_smoothing.apply(freqbuf, (buffersize + 7) / 8, freq)) {
++                    for (int i = 0; i < stages + 1; ++i)
++                        singlefilterout(smp + j, history[i], freq, buffersize - j);
++                    break;
++                }
++            }
++        }
++    } else {
++        freqbufoffset = 0;
++        for (int i = 0; i < stages + 1; ++i)
+             singlefilterout(smp, history[i], freq, buffersize);
+     }
+-
+-    for(int i = 0; i < buffersize; ++i)
+-        smp[i] *= outgain;
++    for (int i = 0; i < buffersize; ++i) smp[i] *= outgain;
+ }
+ 
+ float AnalogFilter::H(float freq)
+--- a/src/DSP/AnalogFilter.h
++++ b/src/DSP/AnalogFilter.h
+@@ -73,7 +73,7 @@ class AnalogFilter:public Filter
+         bool recompute; // need to recompute coeff.
+         int order; //the order of the filter (number of poles)
+ 
+-        int freqbufsize;
++        float freqbuf[1024]; unsigned int freqbufoffset; bool iseven;
+         Value_Smoothing_Filter freq_smoothing; /* for smoothing freq modulations to avoid zipper effect */
+         bool beforeFirstTick; // reset the smoothing at first Tick
+ };
+--- a/src/DSP/SVFilter.cpp
++++ b/src/DSP/SVFilter.cpp
+@@ -33,7 +33,7 @@ SVFilter::SVFilter(unsigned char Ftype, float Ffreq, float Fq,
+       stages(Fstages),
+       freq(Ffreq),
+       q(Fq),
+-      gain(1.0f)
++      gain(1.0f), remainder(0)
+ {
+     if(stages >= MAX_FILTER_STAGES)
+         stages = MAX_FILTER_STAGES;
+@@ -205,29 +205,29 @@ void SVFilter::singlefilterout(float *smp, SVFilter::fstage &x, SVFilter::parame
+ 
+ void SVFilter::filterout(float *smp)
+ {
+-    assert((buffersize % 8) == 0);
++
+ 
+     float freqbuf[buffersize];
+ 
+     if ( freq_smoothing.apply( freqbuf, buffersize, freq ) )
+     {
+         /* 8 sample chunks seems to work OK for AnalogFilter, so do that here too. */
+-        for ( int i = 0; i < buffersize; i += 8 )
+-        {
+-            freq = freqbuf[i];
++        for (int i = 0; i < buffersize; ++i) {
++            if (remainder == 0) { freq = freqbuf[i]; computefiltercoefs(); }
++            for (int j = 0; j < stages + 1; ++j)
++                singlefilterout(smp + i, st[j], par, 1);
++            if (++remainder == 8)
++                remainder = 0;
++        }
++        if (remainder == 0) {
++            freq = freqbuf[buffersize - 1];
+             computefiltercoefs();
+-
+-            for(int j = 0; j < stages + 1; ++j)
+-                singlefilterout(smp + i, st[j], par, 8 );
+         }
+-
+-        freq = freqbuf[buffersize - 1];
+-        computefiltercoefs();
+-    }
+-    else
++    } else {
++        remainder = 0;
+         for(int i = 0; i < stages + 1; ++i)
+             singlefilterout(smp, st[i], par, buffersize );
+-
++    }
+     for(int i = 0; i < buffersize; ++i)
+         smp[i] *= outgain;
+ }
+--- a/src/DSP/SVFilter.h
++++ b/src/DSP/SVFilter.h
+@@ -66,7 +66,7 @@ class SVFilter:public Filter
+         float freq; // Frequency given in Hz
+         float q;    // Q factor (resonance or Q factor)
+         float gain; // the gain of the filter (if are shelf/peak) filters
+-
++    unsigned int remainder;
+     Value_Smoothing_Filter freq_smoothing;
+ };
+ 
+--- a/src/Synth/SUBnote.cpp
++++ b/src/Synth/SUBnote.cpp
+@@ -49,7 +49,7 @@ SUBnote::SUBnote(const SUBnoteParameters *parameters, const SynthParams &spars,
+     GlobalFilterEnvelope(nullptr),
+     NoteEnabled(true),
+     lfilter(nullptr), rfilter(nullptr),
+-    filterupdate(false)
++    filterupdate(false), iseven(true)
+ {
+     setup(spars.velocity, spars.portamento, spars.note_log2_freq, false, wm, prefix);
+ }
+@@ -346,19 +346,19 @@ inline void SubFilterB(const float coeff[4], float &src, float work[4])
+ //in quite a bit of wasted time
+ void SUBnote::filter(bpfilter &filter, float *smps)
+ {
+-    assert(synth.buffersize % 8 == 0);
++
+     float coeff[4] = {filter.b0, filter.b2,  -filter.a1, -filter.a2};
+     float work[4]  = {filter.xn1, filter.xn2, filter.yn1, filter.yn2};
+ 
+-    for(int i = 0; i < synth.buffersize; i += 8) {
+-        SubFilterA(coeff, smps[i + 0], work);
+-        SubFilterB(coeff, smps[i + 1], work);
+-        SubFilterA(coeff, smps[i + 2], work);
+-        SubFilterB(coeff, smps[i + 3], work);
+-        SubFilterA(coeff, smps[i + 4], work);
+-        SubFilterB(coeff, smps[i + 5], work);
+-        SubFilterA(coeff, smps[i + 6], work);
+-        SubFilterB(coeff, smps[i + 7], work);
++    for (int i = 0; i < synth.buffersize; ++i) {
++        if (iseven) {
++            SubFilterA(coeff, smps[i], work);
++        } else {
++            SubFilterB(coeff, smps[i], work);
++        }
++
++
++        iseven = !iseven;
+     }
+     filter.xn1 = work[0];
+     filter.xn2 = work[1];
+--- a/src/Synth/SUBnote.h
++++ b/src/Synth/SUBnote.h
+@@ -104,7 +104,7 @@ class SUBnote:public SynthNote
+ 
+         int   oldpitchwheel, oldbandwidth;
+         float velocity;
+-        bool filterupdate;
++        bool filterupdate; bool iseven;
+ };
+ 
+ }

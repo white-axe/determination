@@ -19,6 +19,7 @@ pkgs.stdenv.mkDerivation {
     hash = "sha256-0siAx141DZx39facXWmKbsi0rHBNpobApTdey07EcXg=";
   };
   patches = [
+    ./buffer.patch
     ./disable-executable.patch
     ./fpu.patch
     ./sequential-pad.patch

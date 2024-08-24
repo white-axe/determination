@@ -41,7 +41,7 @@ usage () {
   >&2 echo '    -r/--rate <integer>       Audio sample rate in hertz'
   >&2 echo '                              (default: 48000)'
   >&2 echo '    -b/--buffer <integer>     Audio buffer size in samples'
-  >&2 echo '                              (default: 256)'
+  >&2 echo '                              (default: 1)'
   >&2 echo ''
 }
 
@@ -54,7 +54,7 @@ end_bar='101'
 end_beat='1'
 end_tick='0'
 rate='48000'
-buffer='256'
+buffer='1'
 
 opts=$(getopt -n determination-export -o ho:s:e:r:b: -l help,output:,start-bar:,start-beat:,start-tick:,end-bar:,end-beat:,end-tick:,rate:,buffer: -- "$@")
 eval set -- "$opts"
