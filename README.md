@@ -6,7 +6,6 @@ This is an [OCI container image](https://opencontainers.org) that can reproducib
 
 It comes with the following software, slimmed down and compiled without floating-point SIMD optimizations so that they behave exactly the same on most x86-64 CPUs.
 
-* [Calf Studio Gear](https://github.com/calf-studio-gear/calf), a collection of LV2 plugins, mostly effects.
 * [Carla](https://github.com/falkTX/Carla), an audio plugin host.
 * [Faust](https://github.com/grame-cncm/faust), a purely functional programming language for digital signal processing.
 * [Mephisto](https://git.open-music-kontrollers.ch/~hp/mephisto.lv2), an LV2 plugin that compiles and runs processors written in the Faust programming language.

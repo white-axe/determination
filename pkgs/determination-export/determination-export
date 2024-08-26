@@ -24,14 +24,12 @@ help () {
   >&2 echo 'Aside from Carla internal plugins, the project must only use the following'
   >&2 echo 'external audio plugins. If any of these external audio plugins are available in'
   >&2 echo 'multiple audio plugin formats, use the LV2 version of the audio plugin.'
-  >&2 echo '  * Calf Studio Gear <https://github.com/calf-studio-gear/calf>'
   >&2 echo '  * Mephisto <https://git.open-music-kontrollers.ch/~hp/mephisto.lv2>'
   >&2 echo '  * ZynAddSubFX <https://github.com/zynaddsubfx/zynaddsubfx>'
   >&2 echo ''
   >&2 echo 'Caveats:'
   >&2 echo '  * Program changes are not supported.'
   >&2 echo '  * The audio file plugin is not supported.'
-  >&2 echo '  * The FluidSynth plugin from Calf Studio Gear is not supported.'
   usage
 }
 
