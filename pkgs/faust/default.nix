@@ -72,6 +72,7 @@ pkgs.stdenv.mkDerivation {
     "-DHTTPDYNAMIC=OFF"
     "-DINCLUDE_ITP=OFF"
     "-DITPDYNAMIC=OFF"
+    "-DSELF_CONTAINED_LIBRARY=ON"
   ];
   postFixup = ''
     mkdir "$dsplibs"

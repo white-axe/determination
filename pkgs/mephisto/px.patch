@@ -1,0 +1,22 @@
+# Determination - Deterministic rendering environment for white-axe's music
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This patch disables a warning in Carla about "px" not being a valid unit.
+
+--- a/ttl/mephisto.ttl.in
++++ b/ttl/mephisto.ttl.in
+@@ -70,8 +70,8 @@ mephisto:fontHeight
+ 	rdfs:label "Font height" ;
+ 	rdfs:comment "get/set font height in px" ;
+ 	lv2:minimum 10 ;
+-	lv2:maximum 25 ;
+-	units:unit mephisto:px .
++	lv2:maximum 25 .
++	#units:unit mephisto:px .
+ mephisto:control_1
+ 	a lv2:Parameter ;
+ 	rdfs:range atom:Float ;

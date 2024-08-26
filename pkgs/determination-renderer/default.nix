@@ -21,6 +21,7 @@ let
       ./recorder.patch
       ./resource-dir-assert.patch
       ./rolling.patch
+      ./saved-client.patch
       ./static.patch
     ];
     buildPhase = ":";

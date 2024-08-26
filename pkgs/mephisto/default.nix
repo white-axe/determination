@@ -22,6 +22,7 @@ pkgs.stdenv.mkDerivation {
   };
   patches = [
     ./disable-ui.patch
+    ./px.patch
     ./sync.patch
   ];
   nativeBuildInputs = [

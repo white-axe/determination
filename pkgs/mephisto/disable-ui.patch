@@ -69,6 +69,26 @@
  
  bank_filter_through_dsp = join_paths(
    meson.current_source_dir(), 'dsp', 'bank-filter_through.dsp')
+@@ -152,12 +152,12 @@ dsp_ttl = configure_file(
+ 	install : true,
+ 	install_dir : inst_dir)
+ 
+-ui_ttl = configure_file(
+-	input : join_paths('ttl', 'mephisto_ui.ttl'),
+-	output : 'mephisto_ui.ttl',
+-	copy: true,
+-	install : true,
+-	install_dir : inst_dir)
++#ui_ttl = configure_file(
++#	input : join_paths('ttl', 'mephisto_ui.ttl'),
++#	output : 'mephisto_ui.ttl',
++#	copy: true,
++#	install : true,
++#	install_dir : inst_dir)
+ 
+ pset_ttl = configure_file(
+ 	input : join_paths('ttl', 'presets.ttl.in'),
+
 --- a/src/mephisto.c
 +++ b/src/mephisto.c
 @@ -2300,7 +2300,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
@@ -80,3 +100,89 @@
  	{
  		if(handle->log)
  		{
+--- a/ttl/manifest.ttl.in
++++ b/ttl/manifest.ttl.in
+@@ -14,7 +14,7 @@ mephisto:audio_1x1
+ 	a lv2:Plugin ;
+ 	lv2:minorVersion @MINOR_VERSION@ ;
+ 	lv2:microVersion @MICRO_VERSION@ ;
+-	ui:ui mephisto:ui ;
++	#ui:ui mephisto:ui ;
+ 	lv2:binary <mephisto@MODULE_SUFFIX@> ;
+ 	rdfs:seeAlso <mephisto.ttl> .
+ 
+@@ -23,7 +23,7 @@ mephisto:audio_2x2
+ 	a lv2:Plugin ;
+ 	lv2:minorVersion @MINOR_VERSION@ ;
+ 	lv2:microVersion @MICRO_VERSION@ ;
+-	ui:ui mephisto:ui ;
++	#ui:ui mephisto:ui ;
+ 	lv2:binary <mephisto@MODULE_SUFFIX@> ;
+ 	rdfs:seeAlso <mephisto.ttl> .
+ 
+@@ -32,7 +32,7 @@ mephisto:audio_4x4
+ 	a lv2:Plugin ;
+ 	lv2:minorVersion @MINOR_VERSION@ ;
+ 	lv2:microVersion @MICRO_VERSION@ ;
+-	ui:ui mephisto:ui ;
++	#ui:ui mephisto:ui ;
+ 	lv2:binary <mephisto@MODULE_SUFFIX@> ;
+ 	rdfs:seeAlso <mephisto.ttl> .
+ 
+@@ -41,7 +41,7 @@ mephisto:audio_8x8
+ 	a lv2:Plugin ;
+ 	lv2:minorVersion @MINOR_VERSION@ ;
+ 	lv2:microVersion @MICRO_VERSION@ ;
+-	ui:ui mephisto:ui ;
++	#ui:ui mephisto:ui ;
+ 	lv2:binary <mephisto@MODULE_SUFFIX@> ;
+ 	rdfs:seeAlso <mephisto.ttl> .
+ 
+@@ -50,7 +50,7 @@ mephisto:cv_1x1
+ 	a lv2:Plugin ;
+ 	lv2:minorVersion @MINOR_VERSION@ ;
+ 	lv2:microVersion @MICRO_VERSION@ ;
+-	ui:ui mephisto:ui ;
++	#ui:ui mephisto:ui ;
+ 	lv2:binary <mephisto@MODULE_SUFFIX@> ;
+ 	rdfs:seeAlso <mephisto.ttl> .
+ 
+@@ -59,7 +59,7 @@ mephisto:cv_2x2
+ 	a lv2:Plugin ;
+ 	lv2:minorVersion @MINOR_VERSION@ ;
+ 	lv2:microVersion @MICRO_VERSION@ ;
+-	ui:ui mephisto:ui ;
++	#ui:ui mephisto:ui ;
+ 	lv2:binary <mephisto@MODULE_SUFFIX@> ;
+ 	rdfs:seeAlso <mephisto.ttl> .
+ 
+@@ -68,7 +68,7 @@ mephisto:cv_4x4
+ 	a lv2:Plugin ;
+ 	lv2:minorVersion @MINOR_VERSION@ ;
+ 	lv2:microVersion @MICRO_VERSION@ ;
+-	ui:ui mephisto:ui ;
++	#ui:ui mephisto:ui ;
+ 	lv2:binary <mephisto@MODULE_SUFFIX@> ;
+ 	rdfs:seeAlso <mephisto.ttl> .
+ 
+@@ -77,15 +77,15 @@ mephisto:cv_8x8
+ 	a lv2:Plugin ;
+ 	lv2:minorVersion @MINOR_VERSION@ ;
+ 	lv2:microVersion @MICRO_VERSION@ ;
+-	ui:ui mephisto:ui ;
++	#ui:ui mephisto:ui ;
+ 	lv2:binary <mephisto@MODULE_SUFFIX@> ;
+ 	rdfs:seeAlso <mephisto.ttl> .
+ 
+ # UIs
+-mephisto:ui
+-	a ui:X11UI ;
+-	ui:binary <mephisto_ui@MODULE_SUFFIX@> ;
+-	rdfs:seeAlso <mephisto_ui.ttl> .
++#mephisto:ui
++#	a ui:X11UI ;
++#	ui:binary <mephisto_ui@MODULE_SUFFIX@> ;
++#	rdfs:seeAlso <mephisto_ui.ttl> .
+ 
+ # Preset banks
+ mephisto:bank-filter
