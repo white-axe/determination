@@ -42,6 +42,7 @@ pkgs.stdenv.mkDerivation {
   preConfigure = ''
     ln -s "${carla}" ./carla
   '';
+  cmakeBuildType = "MinSizeRel";
   buildPhase = ''
     cmake --build . -t determination-renderer -j $NIX_BUILD_CORES
   '';

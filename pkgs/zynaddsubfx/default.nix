@@ -36,6 +36,7 @@ pkgs.stdenv.mkDerivation {
     pkgs.minixml
     pkgs.zlib
   ];
+  cmakeBuildType = "MinSizeRel";
   cmakeFlags = [
     "-DGuiModule=off"
     "-DOssEnable=OFF"
