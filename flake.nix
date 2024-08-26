@@ -42,7 +42,7 @@
           Env = [ "PATH=/bin" ];
           Cmd = [ "/bin/bash" ];
         };
-        excludePathRegex = "^${pkgs.glibc}/share/i18n/locales/[^C]|^${pkgs.glib.out}/share/locale/|^${pkgs.bashInteractive}/share/locale/";
+        excludePathRegex = "^${pkgs.glibc}/share/i18n/locales/[^C]|^${pkgs.bashInteractive}/share/locale/";
         layers = [
           {
             name = "base";
@@ -50,7 +50,6 @@
               pkgs.bashInteractive
               pkgs.coreutils
               pkgs.getopt
-              pkgs.glib
             ];
             runAsRoot = pkgs.dockerTools.shadowSetup;
           }
@@ -66,14 +65,6 @@
             name = "mephisto";
             paths = [ (pkgs.callPackage ./pkgs/mephisto { }) ];
             pathsToLink = [ "/lib/lv2" ];
-          }
-          {
-            name = "calf";
-            paths = [ (pkgs.callPackage ./pkgs/calf { }) ];
-            pathsToLink = [
-              "/lib/calf"
-              "/lib/lv2"
-            ];
           }
           {
             name = "zynaddsubfx";
