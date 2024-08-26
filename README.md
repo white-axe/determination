@@ -8,6 +8,8 @@ It comes with the following software, slimmed down and compiled without floating
 
 * [Calf Studio Gear](https://github.com/calf-studio-gear/calf), a collection of LV2 plugins, mostly effects.
 * [Carla](https://github.com/falkTX/Carla), an audio plugin host.
+* [Faust](https://github.com/grame-cncm/faust), a purely functional programming language for digital signal processing.
+* [Mephisto](https://git.open-music-kontrollers.ch/~hp/mephisto.lv2), an LV2 plugin that compiles and runs processors written in the Faust programming language.
 * [ZynAddSubFX](https://github.com/zynaddsubfx/zynaddsubfx), a software synthesizer, installed as an LV2 plugin.
 
 # Usage

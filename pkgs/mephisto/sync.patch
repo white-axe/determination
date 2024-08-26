@@ -1,0 +1,275 @@
+# Determination - Deterministic rendering environment for white-axe's music
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# Normally, Mephisto compiles programs asynchronously. However, that means the
+# plugin will be nonfunctional for a small amount of time while the program
+# compiles. This patch makes Mephisto compile programs synchronously so that the
+# plugin always processes all the audio given to it.
+
+--- a/src/mephisto.c
++++ b/src/mephisto.c
+@@ -285,27 +285,27 @@ _voice_next(voice_t *voice)
+ 		_voice_not_end((DSP), (VOICE)); \
+ 		(VOICE) = _voice_next((VOICE)))
+ 
+-static void
+-_intercept_code(void *data, int64_t frames __attribute__((unused)),
+-	props_impl_t *impl)
++static int _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code);
++
++static void _refresh_value(plughandle_t *handle, uint32_t idx);
++
++static void _refresh_attributes(plughandle_t *handle, uint32_t idx);
++
++static void _intercept_code(void *data, int64_t frames __attribute__((unused)), props_impl_t *impl)
+ {
+ 	plughandle_t *handle = data;
+ 
+-	char *code;
+-	if( (code = varchunk_write_request(handle->to_worker, impl->value.size)) )
+-	{
+-		memcpy(code, handle->state.code, impl->value.size);
+-
+-		varchunk_write_advance(handle->to_worker, impl->value.size);
++	dsp_t *dsp = calloc(1, sizeof(dsp_t));
+ 
+-		const job_t job = {
+-			.type = JOB_TYPE_INIT
+-		};
+-		handle->sched->schedule_work(handle->sched->handle, sizeof(job), &job);
+-	}
+-	else if(handle->log)
+-	{
+-		lv2_log_trace(&handle->logger, "[%s] ringbuffer overflow\n", __func__);
++	if (_dsp_init(handle, dsp, handle->state.code) == 0) {
++		handle->dsp[0] = dsp;
++		for (uint32_t i = 0; i < NCONTROLS; i++) {
++			_refresh_value(handle, i);
++			_refresh_attributes(handle, i);
++		}
++		handle->dirty.attributes = true;
++	} else {
++		free(dsp);
+ 	}
+ }
+ 
+@@ -513,7 +513,7 @@ _refresh_attributes(plughandle_t *handle, uint32_t idx)
+ 	int32_t type = CNTRL_NONE;
+ 	char label [LABEL_SIZE] = "";
+ 
+-	dsp_t *dsp = handle->dsp[!handle->play];
++	dsp_t *dsp = handle->dsp[0];
+ 
+ 	if(!dsp)
+ 	{
+@@ -728,28 +728,28 @@ _play(plughandle_t *handle, int64_t from, int64_t to)
+ 			continue;
+ 		}
+ 
+-		float gain = 1.f;
+-
+-		if(handle->xfade_cur > 0)
+-		{
+-			const float t = 2.f * handle->xfade_cur / handle->xfade_max - 1.f;
+-
+-			if(d == 0) // fade-out
+-			{
+-				gain = sqrtf(0.5f * (1.f + t) );
+-			}
+-			else // fade-in
+-			{
+-				gain = sqrtf(0.5f * (1.f - t) );
+-			}
+-		}
+-		else
+-		{
+-			if(d == 1)
+-			{
+-				continue; // skip this
+-			}
+-		}
++		//float gain = 1.f;
++		//
++		//if(handle->xfade_cur > 0)
++		//{
++		//	const float t = 2.f * handle->xfade_cur / handle->xfade_max - 1.f;
++		//
++		//	if(d == 0) // fade-out
++		//	{
++		//		gain = sqrtf(0.5f * (1.f + t) );
++		//	}
++		//	else // fade-in
++		//	{
++		//		gain = sqrtf(0.5f * (1.f - t) );
++		//	}
++		//}
++		//else
++		//{
++		//	if(d == 1)
++		//	{
++		//		continue; // skip this
++		//	}
++		//}
+ 
+ 		VOICE_FOREACH(dsp, voice)
+ 		{
+@@ -770,27 +770,27 @@ _play(plughandle_t *handle, int64_t from, int64_t to)
+ 				{
+ 					for(uint32_t i = 0; i < nsamples; i++)
+ 					{
+-						handle->audio_out[n][from + i] += gain * audio_out[n][i];
++						handle->audio_out[n][from + i] += audio_out[n][i];
+ 					}
+ 				}
+ 			}
+ 		}
+ 	}
+ 
+-	if(handle->xfade_cur > 0)
+-	{
+-		if(nsamples >= handle->xfade_cur)
+-		{
+-			handle->xfade_cur = 0;
+-
+-			// switch dsps
+-			handle->play = !handle->play;
+-		}
+-		else
+-		{
+-			handle->xfade_cur -= nsamples;
+-		}
+-	}
++	//if(handle->xfade_cur > 0)
++	//{
++	//	if(nsamples >= handle->xfade_cur)
++	//	{
++	//		handle->xfade_cur = 0;
++	//
++	//		// switch dsps
++	//		handle->play = !handle->play;
++	//	}
++	//	else
++	//	{
++	//		handle->xfade_cur -= nsamples;
++	//	}
++	//}
+ }
+ 
+ static void
+@@ -1091,7 +1091,7 @@ static void
+ connect_port(LV2_Handle instance, uint32_t port, void *data)
+ {
+ 	plughandle_t *handle = (plughandle_t *)instance;
+-
++	
+ 	switch(port)
+ 	{
+ 		case 0:
+@@ -1655,7 +1655,7 @@ run(LV2_Handle instance, uint32_t nsamples)
+ 
+ 	for(unsigned i = 0; i < NCONTROLS; i++)
+ 	{
+-		dsp_t *dsp = handle->dsp[handle->play];
++		dsp_t *dsp = handle->dsp[0];
+ 
+ 		if(!dsp)
+ 		{
+@@ -2197,8 +2197,8 @@ _ui_init(dsp_t *dsp)
+ }
+ 
+ static int
+-_dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+-	LV2_Worker_Respond_Function respond, LV2_Worker_Respond_Handle target)
++_dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code
++	)
+ {
+ #define ARGC 5
+ 	char err [4096];
+@@ -2215,7 +2215,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+ 			.error = NULL
+ 		};
+ 
+-		respond(target, sizeof(job), &job);
++		//respond(target, sizeof(job), &job);
+ 	}
+ 
+ 	dsp->handle = handle;
+@@ -2228,14 +2228,14 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+ 	{
+ 		if(handle->log)
+ 		{
+-			lv2_log_error(&handle->logger, "[%s] %s", __func__, err);
++			lv2_log_error(&handle->logger, "[%s] %s\n", __func__, err);
+ 
+ 			const job_t job = {
+ 				.type = JOB_TYPE_ERROR_APPEND,
+ 				.error = strdup(err)
+ 			};
+ 
+-			respond(target, sizeof(job), &job);
++			//respond(target, sizeof(job), &job);
+ 		}
+ 
+ 		goto fail;
+@@ -2247,7 +2247,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+ 	{
+ 		if(handle->log)
+ 		{
+-			lv2_log_error(&handle->logger, "[%s] instance creation failed", __func__);
++			lv2_log_error(&handle->logger, "[%s] instance creation failed\n", __func__);
+ 		}
+ 
+ 		deleteCDSPFactory(dsp->factory);
+@@ -2263,7 +2263,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+ 	{
+ 		if(handle->log)
+ 		{
+-			lv2_log_error(&handle->logger, "[%s] meta creation failed", __func__);
++			lv2_log_error(&handle->logger, "[%s] meta creation failed\n", __func__);
+ 		}
+ 
+ 		deleteCDSPFactory(dsp->factory);
+@@ -2286,7 +2286,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+ 			{
+ 				if(handle->log)
+ 				{
+-					lv2_log_error(&handle->logger, "[%s] instance creation failed", __func__);
++					lv2_log_error(&handle->logger, "[%s] instance creation failed\n", __func__);
+ 				}
+ 
+ 				break;
+@@ -2304,7 +2304,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+ 	{
+ 		if(handle->log)
+ 		{
+-			lv2_log_error(&handle->logger, "[%s] ui creation failed", __func__);
++			lv2_log_error(&handle->logger, "[%s] ui creation failed\n", __func__);
+ 		}
+ 
+ 		deleteCDSPFactory(dsp->factory);
+@@ -2313,9 +2313,9 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+ 
+ 	if(handle->log)
+ 	{
+-		lv2_log_note(&handle->logger,
+-			"[%s] compilation succeeded (ins: %u, outs: %u, type: %s)", __func__,
+-			dsp->nins, dsp->nouts, dsp->is_instrument ? "instrument" : "filter");
++		//lv2_log_note(&handle->logger,
++		//	"[%s] compilation succeeded (ins: %u, outs: %u, type: %s)", __func__,
++		//	dsp->nins, dsp->nouts, dsp->is_instrument ? "instrument" : "filter");
+ 	}
+ 
+ 	pthread_mutex_unlock(&lock);
+@@ -2414,7 +2414,7 @@ _work(LV2_Handle instance,
+ 			while( (code= varchunk_read_request(handle->to_worker, &size)) )
+ 			{
+ 				dsp_t *dsp = calloc(1, sizeof(dsp_t));
+-				if(dsp && (_dsp_init(handle, dsp, code, respond, target) == 0) )
++				if(dsp && (_dsp_init(handle, dsp, code) == 0) )
+ 				{
+ 					const job_t job2 = {
+ 						.type = JOB_TYPE_INIT,

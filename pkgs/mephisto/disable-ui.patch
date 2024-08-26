@@ -1,0 +1,82 @@
+# Determination - Deterministic rendering environment for white-axe's music
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This patch disables compiling Mephisto's GUI to reduce runtime dependencies.
+
+--- a/meson.build
++++ b/meson.build
+@@ -8,7 +8,7 @@ project('mephisto.lv2', 'c', default_options : [
+ 	'b_lto=true',
+ 	'c_std=gnu11'])
+ 
+-d2tk = subproject('d2tk')
++#d2tk = subproject('d2tk')
+ varchunk = subproject('varchunk')
+ ser_atom_lv2 = subproject('ser_atom.lv2')
+ timely_lv2 = subproject('timely.lv2')
+@@ -20,13 +20,13 @@ use_fontconfig = get_option('use-fontconfig')
+ 
+ inst_dir = join_paths(lv2libdir, meson.project_name())
+ 
+-if get_option('use-backend-nanovg').enabled()
+-	d2tk_dep = d2tk.get_variable('d2tk_nanovg')
+-elif get_option('use-backend-cairo').enabled()
+-	d2tk_dep = d2tk.get_variable('d2tk_cairo')
+-else
+-	error('no valid UI backend given')
+-endif
++#if get_option('use-backend-nanovg').enabled()
++#	d2tk_dep = d2tk.get_variable('d2tk_nanovg')
++#elif get_option('use-backend-cairo').enabled()
++#	d2tk_dep = d2tk.get_variable('d2tk_cairo')
++#else
++#	error('no valid UI backend given')
++#endif
+ 
+ varchunk_dep = varchunk.get_variable('varchunk')
+ ser_atom_lv2_dep = ser_atom_lv2.get_variable('ser_atom_lv2')
+@@ -71,7 +71,7 @@ if cc.has_member('LV2UI_Request_Value', 'request',
+ endif
+ 
+ dsp_deps = [m_dep, lv2_dep, faust_dep, varchunk_dep, timely_lv2_dep, props_lv2_dep]
+-ui_deps = [lv2_dep, d2tk_dep, ser_atom_lv2_dep, props_lv2_dep]
++#ui_deps = [lv2_dep, d2tk_dep, ser_atom_lv2_dep, props_lv2_dep]
+ 
+ inc_dir = []
+ 
+@@ -96,13 +96,13 @@ mod = shared_module('mephisto', dsp_srcs,
+ 	install : true,
+ 	install_dir : inst_dir)
+ 
+-ui = shared_module('mephisto_ui', ui_srcs,
+-	c_args : c_args,
+-	include_directories : inc_dir,
+-	name_prefix : '',
+-	dependencies : ui_deps,
+-	install : true,
+-	install_dir : inst_dir)
++#ui = shared_module('mephisto_ui', ui_srcs,
++#	c_args : c_args,
++#	include_directories : inc_dir,
++#	name_prefix : '',
++#	dependencies : ui_deps,
++#	install : true,
++#	install_dir : inst_dir)
+ 
+ bank_filter_through_dsp = join_paths(
+   meson.current_source_dir(), 'dsp', 'bank-filter_through.dsp')
+--- a/src/mephisto.c
++++ b/src/mephisto.c
+@@ -2300,7 +2300,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+ 		base_voice->state = VOICE_STATE_ACTIVE;
+ 	}
+ 
+-	if(_ui_init(dsp) != 0)
++	if(false)
+ 	{
+ 		if(handle->log)
+ 		{

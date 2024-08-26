@@ -1,0 +1,99 @@
+# Determination - Deterministic rendering environment for white-axe's music
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This patch stops unnecessary files from being installed in /share/faust.
+
+--- a/build/CMakeLists.txt
++++ b/build/CMakeLists.txt
+@@ -399,32 +399,32 @@ install (
+ 
+ ####################################
+ # install shared resources
+-install (
+-    FILES     ${ROOT}/documentation/man/man1/faust.1 DESTINATION ${CMAKE_INSTALL_PREFIX}/share/man/man1
+-    PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+-)
+-
+-install (
+-    FILES  ${ARCHDIR}/httpdlib/src/hexa/jsscripts DESTINATION ${CMAKE_INSTALL_PREFIX}/share/faust/js
+-    RENAME jsscripts.js
+-    PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+-)
+-
+-install (
+-    FILES  ${ARCHDIR}/httpdlib/src/hexa/stylesheet DESTINATION ${CMAKE_INSTALL_PREFIX}/share/faust/js
+-    RENAME stylesheet.js
+-    PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+-)
++#install (
++#    FILES     ${ROOT}/documentation/man/man1/faust.1 DESTINATION ${CMAKE_INSTALL_PREFIX}/share/man/man1
++#    PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
++#)
++#
++#install (
++#    FILES  ${ARCHDIR}/httpdlib/src/hexa/jsscripts DESTINATION ${CMAKE_INSTALL_PREFIX}/share/faust/js
++#    RENAME jsscripts.js
++#    PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
++#)
++#
++#install (
++#    FILES  ${ARCHDIR}/httpdlib/src/hexa/stylesheet DESTINATION ${CMAKE_INSTALL_PREFIX}/share/faust/js
++#    RENAME stylesheet.js
++#    PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
++#)
+ 
+ ####################################
+ # install examples
+-install (
+-    DIRECTORY     ${ROOT}/examples DESTINATION ${CMAKE_INSTALL_PREFIX}//share/faust
+-    FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+-    DIRECTORY_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+-    	GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+-    PATTERN ".DS_Store" EXCLUDE
+-)
++#install (
++#    DIRECTORY     ${ROOT}/examples DESTINATION ${CMAKE_INSTALL_PREFIX}//share/faust
++#    FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
++#    DIRECTORY_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
++#    	GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
++#    PATTERN ".DS_Store" EXCLUDE
++#)
+ 
+ # install faust libraries
+ file (GLOB FAUSTDSPLIBS ${ROOT}/libraries/*.lib ${ROOT}/libraries/old/*.lib)
+@@ -435,7 +435,7 @@ file (GLOB FAUSTARCHS ${ARCHDIR}/*.cpp ${ARCHDIR}/*.c ${ARCHDIR}/*.cs ${ARCHDIR}
+ 					${ARCHDIR}/*.d ${ARCHDIR}/mathdoctexts-*.txt  
+ 					${ARCHDIR}/latexheader.tex)
+ install (
+-    FILES     ${FAUSTDSPLIBS} ${FAUSTARCHS} ${ROOT}/tools/faust2appls/Info.plist DESTINATION ${CMAKE_INSTALL_PREFIX}/share/faust
++    FILES     ${FAUSTDSPLIBS} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/faust
+     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+ )
+ install (
+@@ -450,14 +450,14 @@ foreach (dir ${ARCHSRC})
+ endforeach()
+ set(ARCHFOLDERS ${ARCHFOLDERS} ${ARCHDIR}/httpdlib/html/js)
+ 
+-install (
+-    DIRECTORY ${ARCHFOLDERS} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/faust
+-    FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+-    DIRECTORY_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+-    	GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+-    PATTERN ".DS_Store" EXCLUDE
+-    PATTERN "*.o" EXCLUDE
+-)
++#install (
++#    DIRECTORY ${ARCHFOLDERS} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/faust
++#    FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
++#    DIRECTORY_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
++#    	GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
++#    PATTERN ".DS_Store" EXCLUDE
++#    PATTERN "*.o" EXCLUDE
++#)
+ 
+ ####################################
+ # install ios lib

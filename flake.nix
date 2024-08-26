@@ -63,6 +63,11 @@
             ];
           }
           {
+            name = "mephisto";
+            paths = [ (pkgs.callPackage ./pkgs/mephisto { }) ];
+            pathsToLink = [ "/lib/lv2" ];
+          }
+          {
             name = "calf";
             paths = [ (pkgs.callPackage ./pkgs/calf { }) ];
             pathsToLink = [
