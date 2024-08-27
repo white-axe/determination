@@ -35,8 +35,8 @@ pkgs.stdenv.mkDerivation {
   '';
   cmakeBuildType = "MinSizeRel";
   cmakeFlags = [
-    "-DC_BACKEND=STATIC"
-    "-DCPP_BACKEND=STATIC"
+    "-DC_BACKEND=OFF"
+    "-DCPP_BACKEND=OFF"
     "-DINTERP_BACKEND=STATIC"
     "-DINCLUDE_EXECUTABLE=OFF"
     "-DINCLUDE_STATIC=ON"
