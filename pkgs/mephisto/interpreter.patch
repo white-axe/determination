@@ -1,0 +1,165 @@
+# Determination - Deterministic rendering environment for white-axe's music
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This patch makes Mephisto use Faust's interpreter backend instead of its LLVM
+# backend. The interpreter backend is slower but is much smaller. It doesn't
+# matter how slow it is, anyways, because we don't need to render in realtime.
+
+--- a/src/mephisto.c
++++ b/src/mephisto.c
+@@ -20,7 +20,7 @@
+ #include <timely.lv2/timely.h>
+ #include <varchunk/varchunk.h>
+ 
+-#include FAUST_LLVM_DSP_C_H
++#include <faust/dsp/interpreter-dsp-c.h>
+ 
+ #define MAX_CHANNEL 8
+ #define MAX_VOICES 64
+@@ -124,7 +124,7 @@ struct _pos_t {
+ };
+ 
+ struct _voice_t {
+-	llvm_dsp *instance;
++	interpreter_dsp *instance;
+ 
+ 	cntrl_t gate;
+ 	cntrl_t gain;
+@@ -146,7 +146,7 @@ struct _voice_t {
+ 
+ struct _dsp_t {
+ 	plughandle_t *handle;
+-	llvm_dsp_factory *factory;
++	interpreter_dsp_factory *factory;
+ 	UIGlue ui_glue;
+ 	MetaGlue meta_glue;
+ 	uint32_t nins;
+@@ -757,13 +757,13 @@ _play(plughandle_t *handle, int64_t from, int64_t to)
+ 				if(voice->retrigger)
+ 				{
+ 					_cntrl_refresh_value_abs(&voice->gate, 0.f);
+-					computeCDSPInstance(voice->instance, 1, audio_in, audio_out);
++					computeCInterpreterDSPInstance(voice->instance, 1, audio_in, audio_out);
+ 					_cntrl_refresh_value_abs(&voice->gate, 1.f);
+ 
+ 					voice->retrigger = false;
+ 				}
+ 
+-				computeCDSPInstance(voice->instance, nsamples, audio_in, audio_out);
++				computeCInterpreterDSPInstance(voice->instance, nsamples, audio_in, audio_out);
+ 
+ 				// add to master out
+ 				for(uint32_t n = 0; n < handle->nchannel; n++)
+@@ -2155,7 +2155,7 @@ _meta_init(dsp_t *dsp, voice_t *base_voice)
+ 	dsp->timely_mask = 0;
+ 	dsp->idx = -1;
+ 
+-	metadataCDSPInstance(base_voice->instance, glue);
++	metadataCInterpreterDSPInstance(base_voice->instance, glue);
+ 
+ 	return 0;
+ }
+@@ -2187,7 +2187,7 @@ _ui_init(dsp_t *dsp)
+ 	{
+ 		if(voice->instance)
+ 		{
+-			buildUserInterfaceCDSPInstance(voice->instance, glue);
++			buildUserInterfaceCInterpreterDSPInstance(voice->instance, glue);
+ 		}
+ 
+ 		dsp->cvoices++;
+@@ -2223,7 +2223,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+ 
+ 	pthread_mutex_lock(&lock);
+ 
+-	dsp->factory = createCDSPFactoryFromString("mephisto", code, ARGC, argv, "", err, -1);
++	dsp->factory = createCInterpreterDSPFactoryFromString("mephisto", code, ARGC, argv, err);
+ 	if(!dsp->factory)
+ 	{
+ 		if(handle->log)
+@@ -2242,7 +2242,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+ 	}
+ 
+ 	voice_t *base_voice = _voice_begin(dsp);
+-	base_voice->instance = createCDSPInstance(dsp->factory);
++	base_voice->instance = createCInterpreterDSPInstance(dsp->factory);
+ 	if(!base_voice->instance)
+ 	{
+ 		if(handle->log)
+@@ -2250,14 +2250,14 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+ 			lv2_log_error(&handle->logger, "[%s] instance creation failed", __func__);
+ 		}
+ 
+-		deleteCDSPFactory(dsp->factory);
++		deleteCInterpreterDSPFactory(dsp->factory);
+ 		goto fail;
+ 	}
+ 
+-	instanceInitCDSPInstance(base_voice->instance, handle->srate);
++	instanceInitCInterpreterDSPInstance(base_voice->instance, handle->srate);
+ 
+-	dsp->nins = getNumInputsCDSPInstance(base_voice->instance);
+-	dsp->nouts = getNumInputsCDSPInstance(base_voice->instance);
++	dsp->nins = getNumInputsCInterpreterDSPInstance(base_voice->instance);
++	dsp->nouts = getNumInputsCInterpreterDSPInstance(base_voice->instance);
+ 
+ 	if(_meta_init(dsp, base_voice) != 0)
+ 	{
+@@ -2266,7 +2266,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+ 			lv2_log_error(&handle->logger, "[%s] meta creation failed", __func__);
+ 		}
+ 
+-		deleteCDSPFactory(dsp->factory);
++		deleteCInterpreterDSPFactory(dsp->factory);
+ 		goto fail;
+ 	}
+ 
+@@ -2281,7 +2281,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+ 				continue;
+ 			}
+ 
+-			voice->instance = cloneCDSPInstance(base_voice->instance);
++			voice->instance = cloneCInterpreterDSPInstance(base_voice->instance);
+ 			if(!voice->instance)
+ 			{
+ 				if(handle->log)
+@@ -2292,7 +2292,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+ 				break;
+ 			}
+ 
+-			instanceInitCDSPInstance(voice->instance, handle->srate);
++			instanceInitCInterpreterDSPInstance(voice->instance, handle->srate);
+ 		}
+ 	}
+ 	else
+@@ -2307,7 +2307,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+ 			lv2_log_error(&handle->logger, "[%s] ui creation failed", __func__);
+ 		}
+ 
+-		deleteCDSPFactory(dsp->factory);
++		deleteCInterpreterDSPFactory(dsp->factory);
+ 		goto fail;
+ 	}
+ 
+@@ -2338,14 +2338,14 @@ _dsp_deinit(plughandle_t *handle __attribute__((unused)), dsp_t *dsp)
+ 		{
+ 			if(voice->instance)
+ 			{
+-				instanceClearCDSPInstance(voice->instance);
+-				deleteCDSPInstance(voice->instance);
++				instanceClearCInterpreterDSPInstance(voice->instance);
++				deleteCInterpreterDSPInstance(voice->instance);
+ 			}
+ 		}
+ 
+ 		if(dsp->factory)
+ 		{
+-			deleteCDSPFactory(dsp->factory);
++			deleteCInterpreterDSPFactory(dsp->factory);
+ 		}
+ 
+ 		pthread_mutex_unlock(&lock);

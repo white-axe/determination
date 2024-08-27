@@ -8,7 +8,6 @@
 let
   version = "0.18.2";
   faust = pkgs.callPackage ../faust { };
-  llvm = pkgs.callPackage ../llvm { };
 in
 pkgs.stdenv.mkDerivation {
   pname = "mephisto";
@@ -22,6 +21,7 @@ pkgs.stdenv.mkDerivation {
   };
   patches = [
     ./disable-ui.patch
+    ./interpreter.patch
     ./px.patch
     ./sync.patch
   ];
@@ -34,18 +34,11 @@ pkgs.stdenv.mkDerivation {
   ];
   buildInputs = [
     faust
-    llvm
     pkgs.lv2
   ];
   preConfigure = ''
-    libs=
-    while IFS= read -r file; do
-      libs="$libs,cc.find_library('$(basename "$file" | sed -e 's/^lib//' -e 's/\.a$//')')"
-    done < <(find "${llvm}/lib" -maxdepth 1 -type f | sort)
     substituteInPlace src/mephisto.c \
       --replace-fail 'faust -dspdir' 'echo ${faust.dsplibs}/share/faust'
-    substituteInPlace meson.build \
-      --replace-fail 'dsp_deps = [m_dep, lv2_dep, faust_dep, varchunk_dep, timely_lv2_dep, props_lv2_dep]' "dsp_deps = [m_dep, lv2_dep, faust_dep $libs, varchunk_dep, timely_lv2_dep, props_lv2_dep]"
   '';
   mesonBuildType = "minsize";
 }
