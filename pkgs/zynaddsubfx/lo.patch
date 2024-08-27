@@ -1,0 +1,40 @@
+# Determination - Deterministic rendering environment for white-axe's music
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This patch disables launching a liblo server.
+
+--- a/src/Misc/MiddleWare.cpp
++++ b/src/Misc/MiddleWare.cpp
+@@ -1949,17 +1949,17 @@ MiddleWareImpl::MiddleWareImpl(MiddleWare *mw, SYNTH_T synth_,
+     uToB = new rtosc::ThreadLink(4096*2*16,1024/16);
+     midi_mapper.base_ports = &Master::ports;
+     midi_mapper.rt_cb      = [this](const char *msg){handleMsg(msg);};
+-    if(preferrred_port != -1)
+-        server = lo_server_new_with_proto(to_s(preferrred_port).c_str(),
+-                                          LO_UDP, liblo_error_cb);
+-    else
+-        server = lo_server_new_with_proto(NULL, LO_UDP, liblo_error_cb);
+-
+-    if(server) {
+-        lo_server_add_method(server, NULL, NULL, handler_function, mw);
+-        fprintf(stderr, "lo server running on %d\n", lo_server_get_port(server));
+-    } else
+-        fprintf(stderr, "lo server could not be started :-/\n");
++    //if(preferrred_port != -1)
++    //    server = lo_server_new_with_proto(to_s(preferrred_port).c_str(),
++    //                                      LO_UDP, liblo_error_cb);
++    //else
++    //    server = lo_server_new_with_proto(NULL, LO_UDP, liblo_error_cb);
++    //
++    //if(server) {
++    //    lo_server_add_method(server, NULL, NULL, handler_function, mw);
++    //    fprintf(stderr, "lo server running on %d\n", lo_server_get_port(server));
++    //} else
++    //    fprintf(stderr, "lo server could not be started :-/\n");
+ 
+ 
+     //dummy callback for starters

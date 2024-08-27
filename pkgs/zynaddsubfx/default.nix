@@ -22,6 +22,7 @@ pkgs.stdenv.mkDerivation {
     ./buffer.patch
     ./disable-executable.patch
     ./fpu.patch
+    ./lo.patch
     ./load-part.patch
     ./sequential-pad.patch
     ./stdint.patch
