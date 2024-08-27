@@ -160,15 +160,6 @@
  }
  
  static void
-@@ -1091,7 +1091,7 @@ static void
- connect_port(LV2_Handle instance, uint32_t port, void *data)
- {
- 	plughandle_t *handle = (plughandle_t *)instance;
--
-+	
- 	switch(port)
- 	{
- 		case 0:
 @@ -1655,7 +1655,7 @@ run(LV2_Handle instance, uint32_t nsamples)
  
  	for(unsigned i = 0; i < NCONTROLS; i++)
