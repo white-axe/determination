@@ -23,6 +23,7 @@ enum State {
     WaitForRenderFinish,
     WaitForFreewheelOn,
     WaitForFreewheelOff,
+    LogRenderProgress,
     Ok,
     PipeFail,
 };
@@ -50,13 +51,9 @@ static const char *error = NULL;
 jack_client_t *determination_get_jack_client(CarlaHostHandle handle);
 void determination_set_process_callback(CarlaHostHandle handle, void (*callback)(jack_nframes_t, bool));
 
-inline void post() {
-    sem_post(&semaphore);
-}
-
 inline void post(State val) {
     state.store(val);
-    post();
+    sem_post(&semaphore);
 }
 
 inline State wait() {
@@ -69,13 +66,16 @@ inline State wait() {
     return state.load();
 }
 
-inline State wait(State val) {
+inline State store_and_wait(State val) {
     state.store(val);
     return wait();
 }
 
-inline void drain() {
-    while (sem_trywait(&semaphore) == 0 || errno != EAGAIN) { }
+inline State store_and_wait_for(State val, State cond) {
+    State result = store_and_wait(val);
+    while (result != cond)
+        result = wait();
+    return result;
 }
 
 inline void update_progress(jack_position_t *pos, jack_time_t newElapsedTime) {
@@ -93,6 +93,7 @@ inline int32_t convert_sample(float sample) {
 static void process(jack_nframes_t nframes, bool freewheel) {
     switch (state.load()) {
         case WaitForRenderFinish:
+        case LogRenderProgress:
             break;
         case WaitForFreewheelOn:
             if (freewheel)
@@ -130,7 +131,7 @@ static void process(jack_nframes_t nframes, bool freewheel) {
     if (newElapsedDelayIntervals > elapsedDelayIntervals) {
         elapsedDelayIntervals = newElapsedDelayIntervals;
         update_progress(&pos, newElapsedTime);
-        post();
+        post(LogRenderProgress);
     }
 
     // Do nothing if JACK transport hasn't reached the start position yet
@@ -215,17 +216,17 @@ inline bool render(char *projectPath) {
     determination_set_process_callback(handle, process);
 
     // Block this thread until `process()` detects that freewheeling is enabled
-    wait(WaitForFreewheelOn);
+    store_and_wait_for(WaitForFreewheelOn, Ok);
 
     std::cerr << "[determination-renderer] Starting JACK transport" << std::endl;
     carla_transport_play(handle);
 
     // Block this thread until `process()` detects that the JACK transport has reached the end position or an error occurred
     std::cerr << "[determination-renderer] Rendering audio" << std::endl;
-    State result = wait(WaitForRenderFinish);
+    State result = store_and_wait(WaitForRenderFinish);
     for (;;) {
         switch (result) {
-            case WaitForRenderFinish:
+            case LogRenderProgress:
                 log_progress();
                 break;
             case Ok:
@@ -274,7 +275,6 @@ int main(int argc, char **argv) {
         std::cerr << "\e[91m[determination-renderer] " << error << "\e[0m" << std::endl;
     else
         std::cerr << "[determination-renderer] Rendering finished!" << std::endl;
-    drain();
 
     // `carla_engine_close()` modifies the JACK graph,
     // which is not permitted when freewheeling is enabled,
@@ -284,7 +284,7 @@ int main(int argc, char **argv) {
         std::cerr << "[determination-renderer] Failed to disable JACK freewheel mode" << std::endl;
     } else {
         // Block this thread until `process()` detects that freewheeling is disabled
-        wait(WaitForFreewheelOff);
+        store_and_wait_for(WaitForFreewheelOff, Ok);
     }
 
     std::cerr << "[determination-renderer] Cleaning up" << std::endl;
