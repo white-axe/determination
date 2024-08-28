@@ -48,7 +48,7 @@ usage () {
   >&2 echo '    -r/--rate <integer>       Audio sample rate in hertz (samples per second)'
   >&2 echo '                              (default: 48000, which is equivalent to 48 kilohertz)'
   >&2 echo '    -b/--buffer <integer>     Audio buffer size in samples'
-  >&2 echo '                              (default: 256)'
+  >&2 echo '                              (default: 128)'
   >&2 echo '    --log-interval <integer>  Microseconds to wait between displays of the rendering progress'
   >&2 echo '                              (default: 10000000, which is equivalent to 10 seconds)'
   >&2 echo ''
@@ -59,7 +59,7 @@ output=''
 start='0'
 end='28800000'
 rate='48000'
-buffer='256'
+buffer='128'
 log_interval='10000000'
 
 opts=$(getopt -n determination-export -o ho:s:e:r:b: -l help,output:,start:,end:,rate:,buffer:,log-interval: -- "$@")
