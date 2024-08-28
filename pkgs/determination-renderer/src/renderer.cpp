@@ -30,9 +30,6 @@ static std::atomic<State> state;
 
 static jack_time_t elapsedTime;
 static jack_nframes_t currentFrame;
-static int32_t currentBar;
-static int32_t currentBeat;
-static int32_t currentTick;
 static std::mutex mutex;
 
 static uint8_t buf[6 * 682];
@@ -44,12 +41,8 @@ static jack_client_t *client;
 static jack_port_t *recorderL;
 static jack_port_t *recorderR;
 
-static int32_t startBar;
-static int32_t startBeat;
-static int32_t startTick;
-static int32_t endBar;
-static int32_t endBeat;
-static int32_t endTick;
+static jack_nframes_t start;
+static jack_nframes_t end;
 static jack_time_t progressDelay;
 
 static const char *error = NULL;
@@ -90,9 +83,6 @@ inline void update_progress(jack_position_t *pos, jack_time_t newElapsedTime) {
     mutex.lock();
     elapsedTime = newElapsedTime;
     currentFrame = pos->frame;
-    currentBar = pos->bar;
-    currentBeat = pos->beat;
-    currentTick = pos->tick;
     mutex.unlock();
 }
 
@@ -126,7 +116,7 @@ static void process(jack_nframes_t nframes, bool freewheel) {
     jack_time_t newElapsedTime = pos.usecs - startTime;
 
     // Stop once the JACK transport has reached the end position
-    if (pos.bar > endBar || (pos.bar == endBar && (pos.beat > endBeat || (pos.beat == endBeat && pos.tick >= endTick)))) {
+    if (pos.frame >= end) {
         jackbridge_transport_stop(client);
         update_progress(&pos, newElapsedTime);
         // Writing to the pipe isn't realtime-safe, but freewheeling should be enabled by now so it's fine
@@ -144,7 +134,7 @@ static void process(jack_nframes_t nframes, bool freewheel) {
     }
 
     // Do nothing if JACK transport hasn't reached the start position yet
-    if (pos.bar < startBar || (pos.bar == startBar && (pos.beat < startBeat || (pos.beat == startBeat && pos.tick < startTick))))
+    if (pos.frame < start)
         return;
 
     // Get the data we received on our input ports and copy to our internal buffer
@@ -180,9 +170,6 @@ static void log_progress() {
     mutex.lock();
     jack_time_t elapsed = elapsedTime;
     jack_nframes_t frame = currentFrame;
-    int32_t bar = currentBar;
-    int32_t beat = currentBeat;
-    int32_t tick = currentTick;
     mutex.unlock();
     bool shown = false;
     std::cerr << std::setfill('0') << "[determination-renderer]";
@@ -204,8 +191,8 @@ static void log_progress() {
     std::cerr << ' ' << std::setw(2) << elapsed / 1000000ll << 's';
     elapsed %= 1000000ll;
     std::cerr << ' ' << std::setfill('0') << std::setw(6) << elapsed << "us";
-    std::cerr << "    " << std::setfill('0') << std::setw(3) << bar << '|' << std::setw(2) << beat << '|' << std::setw(4) << tick;
-    std::cerr << "    " << frame << " frames" << std::endl;
+    std::cerr << "    " << frame << " samples";
+    std::cerr << "    " << std::round(std::min((double)currentFrame / (double)end, 1.) * 100000.) / 1000. << '%' << std::endl;
 }
 
 inline bool render(char *projectPath) {
@@ -257,13 +244,9 @@ inline bool render(char *projectPath) {
 
 int main(int argc, char **argv) {
     std::cerr << "[determination-renderer] Initializing" << std::endl;
-    startBar = std::strtol(argv[2], NULL, 10);
-    startBeat = std::strtol(argv[3], NULL, 10);
-    startTick = std::strtol(argv[4], NULL, 10);
-    endBar = std::strtol(argv[5], NULL, 10);
-    endBeat = std::strtol(argv[6], NULL, 10);
-    endTick = std::strtol(argv[7], NULL, 10);
-    progressDelay = std::strtoll(argv[8], NULL, 10);
+    start = std::strtoll(argv[2], NULL, 10);
+    end = std::strtoll(argv[3], NULL, 10);
+    progressDelay = std::strtoll(argv[4], NULL, 10);
     handle = carla_standalone_host_init();
     if (!carla_engine_init(handle, "JACK", "DeterminationRenderer")) {
         std::cerr << "\e[91m[determination-renderer] " << carla_get_last_error(handle) << "\e[0m" << std::endl;

@@ -41,19 +41,11 @@ usage () {
   >&2 echo '    -h/--help                 Show a help message and quit'
   >&2 echo '    -o/--output <path>        Path where the FLAC file should be exported'
   >&2 echo '                              (default: the input path with the file extension replaced with ".flac")'
-  >&2 echo '    -s/--start-bar <integer>  Bar number at which to start rendering audio'
-  >&2 echo '                              (default: 1)'
-  >&2 echo '    --start-beat <integer>    Beat-within-bar at which to start rendering audio'
-  >&2 echo '                              (default: 1)'
-  >&2 echo '    --start-tick <integer>    Tick-within-beat at which to start rendering audio'
+  >&2 echo '    -s/--start <integer>      Sample number (the first sample is sample 0) at which to start rendering'
   >&2 echo '                              (default: 0)'
-  >&2 echo '    -e/--end-bar <integer>    Bar number at which to stop rendering audio'
-  >&2 echo '                              (default: 101)'
-  >&2 echo '    --end-beat <integer>      Beat-within-bar at which to stop rendering audio'
-  >&2 echo '                              (default: 1)'
-  >&2 echo '    --end-tick <integer>      Tick-within-beat at which to stop rendering audio'
-  >&2 echo '                              (default: 0)'
-  >&2 echo '    -r/--rate <integer>       Audio sample rate in hertz'
+  >&2 echo '    -e/--end <integer>        Sample number (the first sample is sample 0) at which to stop rendering'
+  >&2 echo '                              (default: 28800000)'
+  >&2 echo '    -r/--rate <integer>       Audio sample rate in hertz (samples per second)'
   >&2 echo '                              (default: 48000, which is equivalent to 48 kilohertz)'
   >&2 echo '    -b/--buffer <integer>     Audio buffer size in samples'
   >&2 echo '                              (default: 256)'
@@ -64,29 +56,21 @@ usage () {
 
 input=''
 output=''
-start_bar='1'
-start_beat='1'
-start_tick='0'
-end_bar='101'
-end_beat='1'
-end_tick='0'
+start='0'
+end='28800000'
 rate='48000'
 buffer='256'
 log_interval='10000000'
 
-opts=$(getopt -n determination-export -o ho:s:e:r:b: -l help,output:,start-bar:,start-beat:,start-tick:,end-bar:,end-beat:,end-tick:,rate:,buffer:,log-interval: -- "$@")
+opts=$(getopt -n determination-export -o ho:s:e:r:b: -l help,output:,start:,end:,rate:,buffer:,log-interval: -- "$@")
 eval set -- "$opts"
 while true; do
   case "$1" in
     -h|--help) help; exit 0 ;;
     --) input="$2"; if [ -n "$input" ]; then input="$(realpath "$2")"; fi; shift; break ;;
     -o|--output) output="$2"; shift ;;
-    -s|--start-bar) start_bar="$2"; shift ;;
-    --start-beat) start_beat="$2"; shift ;;
-    --start-tick) start_tick="$2"; shift ;;
-    -e|--end-bar) end_bar="$2"; shift ;;
-    --end-beat) end_beat="$2"; shift ;;
-    --end-tick) end_tick="$2"; shift ;;
+    -s|--start) start="$2"; shift ;;
+    -e|--end) end="$2"; shift ;;
     -r|--rate) rate="$2"; shift ;;
     -b|--buffer) buffer="$2"; shift ;;
     --log-interval) log_interval="$2"; shift ;;
@@ -113,7 +97,7 @@ jack_pid=$!
 until [ -S "/dev/shm/jack_${JACK_DEFAULT_SERVER}_0_0" ]; do sleep 0.1; done
 sleep 0.5
 
-if .determination-renderer "$input" "$start_bar" "$start_beat" "$start_tick" "$end_bar" "$end_beat" "$end_tick" "$log_interval"; then
+if .determination-renderer "$input" "$start" "$end" "$log_interval"; then
   >&2 echo '[determination-export] Shutting down JACK'
   kill -INT -$jack_pid
 
