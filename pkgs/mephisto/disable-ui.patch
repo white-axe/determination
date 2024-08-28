@@ -89,17 +89,6 @@
  pset_ttl = configure_file(
  	input : join_paths('ttl', 'presets.ttl.in'),
 
---- a/src/mephisto.c
-+++ b/src/mephisto.c
-@@ -2300,7 +2300,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
- 		base_voice->state = VOICE_STATE_ACTIVE;
- 	}
- 
--	if(_ui_init(dsp) != 0)
-+	if(false)
- 	{
- 		if(handle->log)
- 		{
 --- a/ttl/manifest.ttl.in
 +++ b/ttl/manifest.ttl.in
 @@ -14,7 +14,7 @@ mephisto:audio_1x1
