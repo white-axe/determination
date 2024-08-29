@@ -6,7 +6,7 @@
 # (at your option) any later version.
 { pkgs }:
 let
-  version = "2024-08-28";
+  version = "0.19.127";
   faust = pkgs.callPackage ../faust { };
   llvm = pkgs.callPackage ../llvm { };
 in
