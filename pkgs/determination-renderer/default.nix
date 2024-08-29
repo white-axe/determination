@@ -18,10 +18,10 @@ let
     };
     patches = [
       ./expose.patch
+      ./jack-metadata.patch
       ./recorder.patch
       ./resource-dir-assert.patch
       ./rolling.patch
-      ./saved-client.patch
       ./static.patch
     ];
     buildPhase = ":";

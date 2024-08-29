@@ -1,0 +1,23 @@
+# Determination - Deterministic rendering environment for white-axe's music
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This patch prevents Carla from trying to restore JACK metadata for each
+# individual plugin in the project. First of all, it won't work and will print
+# an annoying warning to the screen when it fails. Second of all, it takes a lot
+# of time.
+
+--- a/source/backend/engine/CarlaEngineJack.cpp
++++ b/source/backend/engine/CarlaEngineJack.cpp
+@@ -2700,7 +2700,7 @@ public:
+     }
+ 
+     bool restorePatchbayGroupPosition(const bool external, PatchbayPosition& ppos) override
+-    {
++    { return false;
+         CARLA_SAFE_ASSERT_RETURN(fClient != nullptr, false);
+         carla_debug("CarlaEngineJack::restorePatchbayGroupPosition(%s, {%i, %i, %i, %i, %i, \"%s\"})",
+                     bool2str(external), ppos.pluginId, ppos.x1, ppos.y1, ppos.x2, ppos.y2, ppos.name);
