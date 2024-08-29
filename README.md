@@ -2,18 +2,18 @@
 
 If you're a software developer, you may have heard of reproducible builds. I think it's important to consider extending binary reproducibility to things other than software.
 
-This is an [OCI container image](https://opencontainers.org) that can reproducibly render my music from the project files. Every time you use this container image to render my music, even on different computers, the output files should be the same. The image is for x86-64 computers, but it should be runnable on other architectures using [QEMU](https://www.qemu.org) without affecting reproducibility of the output files.
+The problem with many synthesizer plugins and effects plugins commonly used in music production is that they depend on global state in some way. For example, if a synthesizer has a white noise generator, it'll need some source of randomness that may be very hard to get exactly the same on two different renderings of the audio. Another example is if an effect uses low-frequency oscillators (LFO): the phase of a low-frequency oscillator often depends on how much time has passed since the plugin was initialized, which also can be really hard to control.
 
-It comes with the following software, slimmed down and compiled without floating-point SIMD optimizations so that they behave exactly the same on most x86-64 CPUs.
+This is an [OCI container image](https://opencontainers.org) that can reproducibly render my music from the project files, which are designed for the [Carla](https://github.com/falkTX/Carla) audio plugin host. Every time you use this container image to render my music, even on different computers, the output files should be the same. The image is for x86-64 computers, but it should be runnable on other architectures using [QEMU](https://www.qemu.org) without affecting reproducibility of the output files.
 
-* [Carla](https://github.com/falkTX/Carla), an audio plugin host.
-* [Faust](https://github.com/grame-cncm/faust), a purely functional programming language for digital signal processing.
-* [Mephisto](https://git.open-music-kontrollers.ch/~hp/mephisto.lv2), an LV2 plugin that compiles and runs processors written in the Faust programming language.
+It comes with the following LV2 audio plugins, modified to behave deterministically.
+
+* [Mephisto](https://git.open-music-kontrollers.ch/~hp/mephisto.lv2), an LV2 plugin that allows you to design your own synthesizers and effects in the [Faust](https://github.com/grame-cncm/faust) programming language and then runs them using LLVM just-in-time compilation.
 * [ZynAddSubFX](https://github.com/zynaddsubfx/zynaddsubfx), a software synthesizer, installed as an LV2 plugin.
 
 # Usage
 
-Install and initialize either [Docker](https://www.docker.com) or [Podman](https://podman.io). Docker Desktop is proprietary software with a restrictive license agreement, unlike the Linux-only free and open-source Docker Engine ("docker.io" or "Docker CE"), so if you're on Windows or macOS I recommend you use Podman CLI or Podman Desktop, both of which are free and open-source and available for Windows, macOS and Linux.
+Install either [Docker](https://www.docker.com) or [Podman](https://podman.io). If you're using Windows or macOS, I recommend using Podman instead of Docker because the Windows and macOS versions of Docker are proprietary software covered by a restrictive licensing agreement. If you're on Linux, please note that Docker Desktop and Docker Engine (the latter of which is also known as "docker.io" or "Docker CE") are not the same thing, and that only Docker Engine is free and open-source software.
 
 Then run this command from a terminal, replacing `<path>` with the absolute path on your computer of a project directory. You may need to run the command as root, or as administrator on Windows. If you're using Podman, also replace `docker` with `podman` in the command.
 
@@ -21,9 +21,9 @@ Then run this command from a terminal, replacing `<path>` with the absolute path
 docker run --rm -it --shm-size 256m --network none -v <path>:/data ghcr.io/white-axe/determination
 ```
 
-This downloads the image, uses it to create a new container with the project directory mounted at `/data` in the container, and connects you to a Bash shell inside the container. You can also add a `:` and a version after the `ghcr.io/white-axe/determination` if you want a specific version of the image, e.g. `ghcr.io/white-axe/determination:1` for the latest version with a major version number of 1.
+This downloads the image, uses it to create a new container with the project directory mounted at `/data` in the container, and connects you to a Bash shell inside the container. You can also add a `:` and a version after the `ghcr.io/white-axe/determination` if you want a specific version of the image, e.g. `ghcr.io/white-axe/determination:2` for the latest version with a major version number of 2.
 
-Inside of the container, the command `determination-export` is provided for rendering Carla patchbay projects. Assuming the .carxp file is named "project.carxp", you can run `determination-export /data/project.carxp -o /data/project.flac -e 101` to export the first 100 bars as audio. Run `determination-export --help` for more detailed usage instructions.
+Inside of the container, the command `determination-export` is provided for rendering Carla patchbay projects. Assuming the .carxp file is named "project.carxp", you can run `determination-export /data/project.carxp -o /data/project.flac` to export the first 10 minutes of the project as audio. Run `determination-export --help` for more detailed usage instructions.
 
 # Building the image from source
 
