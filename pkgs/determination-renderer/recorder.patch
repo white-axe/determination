@@ -13,7 +13,7 @@
 
 --- a/source/backend/engine/CarlaEngine.cpp
 +++ b/source/backend/engine/CarlaEngine.cpp
-@@ -3528,11 +3528,11 @@ bool CarlaEngine::loadProjectInternal(water::XmlDocument& xmlDoc, const bool alw
+@@ -3528,14 +3528,14 @@ bool CarlaEngine::loadProjectInternal(water::XmlDocument& xmlDoc, const bool alw
                          water::String externalPort = targetPort.trimCharactersAtStart("Audio Output:");
  
                          /**/ if (externalPort == "Left")
@@ -23,12 +23,18 @@
 -                            externalPort = "system:playback_2";
 -                        else
 -                            externalPort = "system:playback_ " + externalPort.trimCharactersAtStart("Playback ");
+-
+-                        carla_stdout("Converted port name '%s' to '%s' for this session",
+-                                     targetPort.toRawUTF8(), externalPort.toRawUTF8());
 +                            externalPort = water::String(getName()) + ":RecorderR"; // Convert "Audio Output:Right" to RecorderR
 +                        //else
 +                        //    externalPort = "system:playback_ " + externalPort.trimCharactersAtStart("Playback ");
- 
-                         carla_stdout("Converted port name '%s' to '%s' for this session",
-                                      targetPort.toRawUTF8(), externalPort.toRawUTF8());
++                        //
++                        //carla_stdout("Converted port name '%s' to '%s' for this session",
++                        //             targetPort.toRawUTF8(), externalPort.toRawUTF8());
+                         targetPort = externalPort;
+                     }
+                     else if ((it = map.find(targetPort.upToFirstOccurrenceOf(":", false, false))) != map.end())
 --- a/source/backend/engine/CarlaEngineJack.cpp
 +++ b/source/backend/engine/CarlaEngineJack.cpp
 @@ -1503,7 +1503,7 @@ public:

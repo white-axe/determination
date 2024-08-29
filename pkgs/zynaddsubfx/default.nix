@@ -20,6 +20,7 @@ pkgs.stdenv.mkDerivation {
   };
   patches = [
     ./buffer.patch
+    ./create-binding.patch
     ./disable-executable.patch
     ./fpu.patch
     ./lo.patch
