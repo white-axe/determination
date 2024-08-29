@@ -6,7 +6,7 @@
 # (at your option) any later version.
 { pkgs }:
 let
-  version = "0.18.2";
+  version = "2024-08-28";
   faust = pkgs.callPackage ../faust { };
   llvm = pkgs.callPackage ../llvm { };
 in
@@ -17,8 +17,8 @@ pkgs.stdenv.mkDerivation {
     domain = "open-music-kontrollers.ch";
     owner = "~hp";
     repo = "mephisto.lv2";
-    rev = version;
-    hash = "sha256-ab6OGt1XVgynKNdszzdXwJ/jVKJSzgSmAv6j1U3/va0=";
+    rev = "1201a260ef439873d6e2382c15b39ebc42c812e9";
+    hash = "sha256-ad3nlWHvS8cqxFhgENLs+tFTWbVLTSqHtrJwVPlILVg=";
   };
   patches = [
     ./disable-ui.patch

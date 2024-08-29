@@ -12,7 +12,7 @@
 
 --- a/src/mephisto.c
 +++ b/src/mephisto.c
-@@ -285,27 +285,27 @@ _voice_next(voice_t *voice)
+@@ -287,27 +287,27 @@ _voice_next(voice_t *voice)
  		_voice_not_end((DSP), (VOICE)); \
  		(VOICE) = _voice_next((VOICE)))
  
@@ -57,7 +57,7 @@
  	}
  }
  
-@@ -513,7 +513,7 @@ _refresh_attributes(plughandle_t *handle, uint32_t idx)
+@@ -515,7 +515,7 @@ _refresh_attributes(plughandle_t *handle, uint32_t idx)
  	int32_t type = CNTRL_NONE;
  	char label [LABEL_SIZE] = "";
  
@@ -66,7 +66,7 @@
  
  	if(!dsp)
  	{
-@@ -728,28 +728,28 @@ _play(plughandle_t *handle, int64_t from, int64_t to)
+@@ -730,28 +730,28 @@ _play(plughandle_t *handle, int64_t from, int64_t to)
  			continue;
  		}
  
@@ -117,7 +117,7 @@
  
  		VOICE_FOREACH(dsp, voice)
  		{
-@@ -770,27 +770,27 @@ _play(plughandle_t *handle, int64_t from, int64_t to)
+@@ -772,27 +772,27 @@ _play(plughandle_t *handle, int64_t from, int64_t to)
  				{
  					for(uint32_t i = 0; i < nsamples; i++)
  					{
@@ -160,7 +160,7 @@
  }
  
  static void
-@@ -1655,7 +1655,7 @@ run(LV2_Handle instance, uint32_t nsamples)
+@@ -1661,7 +1661,7 @@ run(LV2_Handle instance, uint32_t nsamples)
  
  	for(unsigned i = 0; i < NCONTROLS; i++)
  	{
@@ -169,7 +169,7 @@
  
  		if(!dsp)
  		{
-@@ -2197,8 +2197,8 @@ _ui_init(dsp_t *dsp)
+@@ -2212,8 +2212,8 @@ _ui_init(dsp_t *dsp)
  }
  
  static int
@@ -180,7 +180,7 @@
  {
  #define ARGC 5
  	char err [4096];
-@@ -2215,7 +2215,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+@@ -2230,7 +2230,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
  			.error = NULL
  		};
  
@@ -189,7 +189,7 @@
  	}
  
  	dsp->handle = handle;
-@@ -2228,14 +2228,14 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+@@ -2243,14 +2243,14 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
  	{
  		if(handle->log)
  		{
@@ -206,7 +206,7 @@
  		}
  
  		goto fail;
-@@ -2247,7 +2247,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+@@ -2262,7 +2262,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
  	{
  		if(handle->log)
  		{
@@ -215,7 +215,7 @@
  		}
  
  		deleteCDSPFactory(dsp->factory);
-@@ -2263,7 +2263,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+@@ -2278,7 +2278,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
  	{
  		if(handle->log)
  		{
@@ -224,7 +224,7 @@
  		}
  
  		deleteCDSPFactory(dsp->factory);
-@@ -2286,7 +2286,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+@@ -2301,7 +2301,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
  			{
  				if(handle->log)
  				{
@@ -233,7 +233,7 @@
  				}
  
  				break;
-@@ -2304,7 +2304,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+@@ -2319,7 +2319,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
  	{
  		if(handle->log)
  		{
@@ -242,7 +242,7 @@
  		}
  
  		deleteCDSPFactory(dsp->factory);
-@@ -2313,9 +2313,9 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+@@ -2328,9 +2328,9 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
  
  	if(handle->log)
  	{
@@ -255,7 +255,7 @@
  	}
  
  	pthread_mutex_unlock(&lock);
-@@ -2414,7 +2414,7 @@ _work(LV2_Handle instance,
+@@ -2429,7 +2429,7 @@ _work(LV2_Handle instance,
  			while( (code= varchunk_read_request(handle->to_worker, &size)) )
  			{
  				dsp_t *dsp = calloc(1, sizeof(dsp_t));

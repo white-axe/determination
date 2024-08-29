@@ -11,7 +11,7 @@
 
 --- a/src/mephisto.c
 +++ b/src/mephisto.c
-@@ -2254,7 +2254,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+@@ -2269,7 +2269,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
  		goto fail;
  	}
  
