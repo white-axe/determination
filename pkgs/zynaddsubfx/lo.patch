@@ -29,7 +29,7 @@
 +    //                                      LO_UDP, liblo_error_cb);
 +    //else
 +    //    server = lo_server_new_with_proto(NULL, LO_UDP, liblo_error_cb);
-+    //
++    server = nullptr;
 +    //if(server) {
 +    //    lo_server_add_method(server, NULL, NULL, handler_function, mw);
 +    //    fprintf(stderr, "lo server running on %d\n", lo_server_get_port(server));
