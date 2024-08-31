@@ -55,14 +55,6 @@
             pathsToLink = [ "/etc" ];
           }
           {
-            name = "renderer";
-            paths = [
-              (pkgs.callPackage ./pkgs/determination-renderer { })
-              pkgs.flac
-              (pkgs.callPackage ./pkgs/jack2 { })
-            ];
-          }
-          {
             name = "mephisto";
             paths = [ (pkgs.callPackage ./pkgs/mephisto { }) ];
             pathsToLink = [ "/lib/lv2" ];
@@ -71,6 +63,14 @@
             name = "zynaddsubfx";
             paths = [ (pkgs.callPackage ./pkgs/zynaddsubfx { }) ];
             pathsToLink = [ "/lib/lv2" ];
+          }
+          {
+            name = "renderer";
+            paths = [
+              (pkgs.callPackage ./pkgs/determination-renderer { })
+              pkgs.flac
+              (pkgs.callPackage ./pkgs/jack2 { })
+            ];
           }
           {
             name = "scripts";
