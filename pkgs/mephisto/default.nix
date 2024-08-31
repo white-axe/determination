@@ -6,24 +6,22 @@
 # (at your option) any later version.
 { pkgs }:
 let
-  version = "0.19.127";
   faust = pkgs.callPackage ../faust { };
   llvm = pkgs.callPackage ../llvm { };
 in
 pkgs.stdenv.mkDerivation {
   pname = "mephisto";
-  inherit version;
+  version = "0.19.159";
   src = pkgs.fetchFromSourcehut {
     domain = "open-music-kontrollers.ch";
     owner = "~hp";
     repo = "mephisto.lv2";
-    rev = "1201a260ef439873d6e2382c15b39ebc42c812e9";
-    hash = "sha256-ad3nlWHvS8cqxFhgENLs+tFTWbVLTSqHtrJwVPlILVg=";
+    rev = "9cef14a2adf8041cc5e7bcd2d274be97d43b7544";
+    hash = "sha256-kKIoD+FlX014pF2bU/9eSIQ0hjYtOqnTUwOO6ljZsFY=";
   };
   patches = [
     ./disable-ui.patch
     ./px.patch
-    ./static.patch
     ./sync.patch
   ];
   nativeBuildInputs = [

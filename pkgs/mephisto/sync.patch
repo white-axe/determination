@@ -12,7 +12,7 @@
 
 --- a/src/mephisto.c
 +++ b/src/mephisto.c
-@@ -287,27 +287,27 @@ _voice_next(voice_t *voice)
+@@ -286,27 +286,27 @@ _voice_next(voice_t *voice)
  		_voice_not_end((DSP), (VOICE)); \
  		(VOICE) = _voice_next((VOICE)))
  
@@ -57,7 +57,7 @@
  	}
  }
  
-@@ -515,7 +515,7 @@ _refresh_attributes(plughandle_t *handle, uint32_t idx)
+@@ -514,7 +514,7 @@ _refresh_attributes(plughandle_t *handle, uint32_t idx)
  	int32_t type = CNTRL_NONE;
  	char label [LABEL_SIZE] = "";
  
@@ -66,7 +66,7 @@
  
  	if(!dsp)
  	{
-@@ -730,28 +730,28 @@ _play(plughandle_t *handle, int64_t from, int64_t to)
+@@ -729,28 +729,28 @@ _play(plughandle_t *handle, int64_t from, int64_t to)
  			continue;
  		}
  
@@ -117,7 +117,7 @@
  
  		VOICE_FOREACH(dsp, voice)
  		{
-@@ -772,27 +772,27 @@ _play(plughandle_t *handle, int64_t from, int64_t to)
+@@ -771,27 +771,27 @@ _play(plughandle_t *handle, int64_t from, int64_t to)
  				{
  					for(uint32_t i = 0; i < nsamples; i++)
  					{
@@ -160,7 +160,7 @@
  }
  
  static void
-@@ -1661,7 +1661,7 @@ run(LV2_Handle instance, uint32_t nsamples)
+@@ -1660,7 +1660,7 @@ run(LV2_Handle instance, uint32_t nsamples)
  
  	for(unsigned i = 0; i < NCONTROLS; i++)
  	{
@@ -169,7 +169,7 @@
  
  		if(!dsp)
  		{
-@@ -2212,8 +2212,8 @@ _ui_init(dsp_t *dsp)
+@@ -2211,8 +2211,8 @@ _ui_init(dsp_t *dsp)
  }
  
  static int
@@ -180,8 +180,8 @@
  {
  #define ARGC 5
  	char err [4096];
-@@ -2230,7 +2230,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
- 			.error = NULL
+@@ -2229,7 +2229,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+ 			.error = { '\0' }
  		};
  
 -		respond(target, sizeof(job), &job);
@@ -189,24 +189,25 @@
  	}
  
  	dsp->handle = handle;
-@@ -2243,14 +2243,14 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+@@ -2242,7 +2242,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
  	{
  		if(handle->log)
  		{
 -			lv2_log_error(&handle->logger, "[%s] %s", __func__, err);
 +			lv2_log_error(&handle->logger, "[%s] %s\n", __func__, err);
  
- 			const job_t job = {
+ 			job_t job = {
  				.type = JOB_TYPE_ERROR_APPEND,
- 				.error = strdup(err)
- 			};
+@@ -2254,7 +2254,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+ 			{
+ 				snprintf(job.error, sizeof(job.error), "%s", &err[off]);
  
--			respond(target, sizeof(job), &job);
-+			//respond(target, sizeof(job), &job);
+-				respond(target, sizeof(job), &job);
++				//respond(target, sizeof(job), &job);
+ 			}
  		}
  
- 		goto fail;
-@@ -2262,7 +2262,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+@@ -2267,7 +2267,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
  	{
  		if(handle->log)
  		{
@@ -215,7 +216,7 @@
  		}
  
  		deleteCDSPFactory(dsp->factory);
-@@ -2278,7 +2278,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+@@ -2284,7 +2284,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
  	{
  		if(handle->log)
  		{
@@ -224,7 +225,7 @@
  		}
  
  		deleteCDSPFactory(dsp->factory);
-@@ -2301,7 +2301,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+@@ -2307,7 +2307,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
  			{
  				if(handle->log)
  				{
@@ -233,16 +234,7 @@
  				}
  
  				break;
-@@ -2319,7 +2319,7 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
- 	{
- 		if(handle->log)
- 		{
--			lv2_log_error(&handle->logger, "[%s] ui creation failed", __func__);
-+			lv2_log_error(&handle->logger, "[%s] ui creation failed\n", __func__);
- 		}
- 
- 		deleteCDSPFactory(dsp->factory);
-@@ -2328,9 +2328,9 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
+@@ -2335,9 +2335,9 @@ _dsp_init(plughandle_t *handle, dsp_t *dsp, const char *code,
  
  	if(handle->log)
  	{
@@ -255,12 +247,12 @@
  	}
  
  	pthread_mutex_unlock(&lock);
-@@ -2429,7 +2429,7 @@ _work(LV2_Handle instance,
- 			while( (code= varchunk_read_request(handle->to_worker, &size)) )
- 			{
+@@ -2438,7 +2438,7 @@ _work(LV2_Handle instance,
  				dsp_t *dsp = calloc(1, sizeof(dsp_t));
--				if(dsp && (_dsp_init(handle, dsp, code, respond, target) == 0) )
-+				if(dsp && (_dsp_init(handle, dsp, code) == 0) )
+ 				if(dsp)
  				{
- 					const job_t job2 = {
- 						.type = JOB_TYPE_INIT,
+-					if(_dsp_init(handle, dsp, code, respond, target) == 0)
++					if(_dsp_init(handle, dsp, code) == 0)
+ 					{
+ 						const job_t job2 = {
+ 							.type = JOB_TYPE_INIT,

@@ -48,7 +48,7 @@
  
  inc_dir = []
  
-@@ -96,13 +96,13 @@ mod = shared_module('mephisto', dsp_srcs,
+@@ -101,13 +101,13 @@ mod = shared_module('mephisto', dsp_srcs,
  	install : true,
  	install_dir : inst_dir)
  
@@ -69,7 +69,7 @@
  
  bank_filter_through_1x1_dsp = join_paths(
    meson.current_source_dir(), 'dsp', 'bank-filter_through-1x1.dsp')
-@@ -170,12 +170,12 @@ dsp_ttl = configure_file(
+@@ -175,12 +175,12 @@ dsp_ttl = configure_file(
  	install : true,
  	install_dir : inst_dir)
  
