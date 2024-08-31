@@ -50,8 +50,9 @@
               pkgs.bashInteractive
               pkgs.coreutils
               pkgs.getopt
+              (pkgs.callPackage ./pkgs/shadow-setup { })
             ];
-            runAsRoot = pkgs.dockerTools.shadowSetup;
+            pathsToLink = [ "/etc" ];
           }
           {
             name = "renderer";
