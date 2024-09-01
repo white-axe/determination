@@ -192,12 +192,10 @@ jobs:
       - name: Prepare release files
         run: |
           cp "${{ steps.attest-artifact.outputs.bundle-path }}" ./closure-determination.tar.zst.sigstore.json
-          split --numeric-suffixes=1 -C 1879048192 closure-determination.tar.zst closure-determination.tar.zst.part
-          rm closure-determination.tar.zst
       - name: Release
         if: ${{ github.event_name == 'release' }}
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            closure-determination.tar.zst.part*
+            closure-determination.tar.zst
             closure-determination.tar.zst.sigstore.json
