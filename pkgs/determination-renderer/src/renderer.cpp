@@ -226,7 +226,6 @@ inline bool render(char *projectPath) {
         switch (result) {
             case LogRenderProgress:
                 log_progress();
-                result = wait_if(LogRenderProgress, WaitForRenderFinish);
                 break;
             case Ok:
                 log_progress();
@@ -238,6 +237,7 @@ inline bool render(char *projectPath) {
             default:
                 break;
         }
+        result = wait_if(result, WaitForRenderFinish);
     }
 }
 
