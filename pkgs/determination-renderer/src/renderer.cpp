@@ -9,15 +9,13 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cassert>
 #include <cstring>
 #include <iostream>
 #include <iomanip>
 #include <mutex>
-#include <semaphore.h>
 #include "carla/source/jackbridge/JackBridge.hpp"
 #include "carla/source/includes/CarlaNativePlugin.h"
-
-static sem_t semaphore;
 
 enum State {
     WaitForRenderFinish,
@@ -32,9 +30,6 @@ static std::atomic<State> state;
 static jack_time_t elapsedTime;
 static jack_nframes_t currentFrame;
 static std::mutex mutex;
-
-static uint8_t buf[6 * 682];
-static uint8_t *bufptr = buf;
 
 static CarlaHostHandle handle;
 static FILE *pipeFile;
@@ -51,31 +46,31 @@ static const char *error = NULL;
 jack_client_t *determination_get_jack_client(CarlaHostHandle handle);
 void determination_set_process_callback(CarlaHostHandle handle, void (*callback)(jack_nframes_t, bool));
 
+// Sets the state to `val` and wakes up a thread waiting for the state to change, if any.
 inline void post(State val) {
+    if (state.exchange(val) != val)
+        state.notify_one();
+}
+
+// Sets the state to `val`, waits for the state to change and then returns the new state.
+inline State wait(State val) {
     state.store(val);
-    sem_post(&semaphore);
-}
-
-inline State wait() {
-    while (sem_wait(&semaphore)) {
-        // If a signal handler is called while `sem_wait()` is waiting,
-        // `sem_wait()` may stop waiting and return with a nonzero return value after the signal handler returns.
-        // We actually want to continue waiting for the semaphore to be posted in that case,
-        // hence why we're spinning here.
-    }
-    return state.load();
-}
-
-inline State store_and_wait(State val) {
-    state.store(val);
-    return wait();
-}
-
-inline State store_and_wait_for(State val, State cond) {
-    State result = store_and_wait(val);
-    while (result != cond)
-        result = wait();
+    State result;
+    do
+        state.wait(val);
+    while ((result = state.load()) == val);
     return result;
+}
+
+// If the current state is not equal to `expected`, returns immediately with the current state.
+// Otherwise, sets the state to `desired`, waits for the state to change and then returns the new state.
+inline State wait_if(State expected, State desired) {
+    if (state.compare_exchange_strong(expected, desired)) {
+        do
+            state.wait(desired);
+        while ((expected = state.load()) == desired);
+    }
+    return expected;
 }
 
 inline void update_progress(jack_position_t *pos, jack_time_t newElapsedTime) {
@@ -91,6 +86,9 @@ inline int32_t convert_sample(float sample) {
 }
 
 static void process(jack_nframes_t nframes, bool freewheel) {
+    static uint8_t buf[6 * 682];
+    static uint8_t *bufptr = buf;
+
     switch (state.load()) {
         case WaitForRenderFinish:
         case LogRenderProgress:
@@ -216,18 +214,19 @@ inline bool render(char *projectPath) {
     determination_set_process_callback(handle, process);
 
     // Block this thread until `process()` detects that freewheeling is enabled
-    store_and_wait_for(WaitForFreewheelOn, Ok);
+    wait(WaitForFreewheelOn);
 
     std::cerr << "[determination-renderer] Starting JACK transport" << std::endl;
     carla_transport_play(handle);
 
     // Block this thread until `process()` detects that the JACK transport has reached the end position or an error occurred
     std::cerr << "[determination-renderer] Rendering audio" << std::endl;
-    State result = store_and_wait(WaitForRenderFinish);
+    State result = wait(WaitForRenderFinish);
     for (;;) {
         switch (result) {
             case LogRenderProgress:
                 log_progress();
+                result = wait_if(LogRenderProgress, WaitForRenderFinish);
                 break;
             case Ok:
                 log_progress();
@@ -239,12 +238,12 @@ inline bool render(char *projectPath) {
             default:
                 break;
         }
-        result = wait();
     }
 }
 
 int main(int argc, char **argv) {
     std::cerr << "[determination-renderer] Initializing" << std::endl;
+    assert(state.is_always_lock_free());
     start = std::strtoll(argv[2], NULL, 10);
     end = std::strtoll(argv[3], NULL, 10);
     progressDelay = std::strtoll(argv[4], NULL, 10);
@@ -263,12 +262,6 @@ int main(int argc, char **argv) {
         carla_engine_close(handle);
         return 1;
     }
-    if (sem_init(&semaphore, 0, 0)) {
-        std::cerr << "\e[91m[determination-renderer] Failed to initialize semaphore\e[0m" << std::endl;
-        std::fclose(pipeFile);
-        carla_engine_close(handle);
-        return 1;
-    }
 
     bool ok = render(argv[1]);
     if (!ok)
@@ -284,11 +277,10 @@ int main(int argc, char **argv) {
         std::cerr << "[determination-renderer] Failed to disable JACK freewheel mode" << std::endl;
     } else {
         // Block this thread until `process()` detects that freewheeling is disabled
-        store_and_wait_for(WaitForFreewheelOff, Ok);
+        wait(WaitForFreewheelOff);
     }
 
     std::cerr << "[determination-renderer] Cleaning up" << std::endl;
-    sem_destroy(&semaphore);
     std::fclose(pipeFile);
     carla_engine_close(handle);
 
