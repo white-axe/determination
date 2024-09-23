@@ -25,6 +25,7 @@ help () {
   >&2 echo 'external audio plugins. If any of these external audio plugins are available in'
   >&2 echo 'multiple audio plugin formats, use the LV2 version of the audio plugin.'
   >&2 echo '  * Mephisto <https://git.open-music-kontrollers.ch/~hp/mephisto.lv2>'
+  >&2 echo '  * Rubber Band <https://hg.sr.ht/~breakfastquay/rubberband>'
   >&2 echo '  * ZynAddSubFX <https://github.com/zynaddsubfx/zynaddsubfx>'
   >&2 echo ''
   >&2 echo 'Caveats:'

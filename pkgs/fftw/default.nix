@@ -4,12 +4,15 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-{ pkgs }:
+{
+  pkgs,
+  precision ? "double",
+}:
 let
   version = "3.3.10";
 in
 pkgs.stdenv.mkDerivation {
-  pname = "fftw";
+  pname = "fftw-${precision}";
   inherit version;
   src = pkgs.fetchurl {
     urls = [
@@ -26,10 +29,9 @@ pkgs.stdenv.mkDerivation {
     })
   ];
   configureFlags = [
-    "--enable-single"
     "--enable-threads"
     "--disable-doc"
-  ];
+  ] ++ pkgs.lib.optional (precision != "double") "--enable-${precision}";
   postPatch = ''
     substituteInPlace configure --replace "-mtune=native" "-mtune=generic"
   '';
