@@ -5,17 +5,14 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 { pkgs }:
-let
-  version = "3.3.0";
-in
 pkgs.stdenv.mkDerivation {
   pname = "rubberband";
-  inherit version;
+  version = "2024-09-24";
   src = pkgs.fetchFromGitHub {
     owner = "breakfastquay";
     repo = "rubberband";
-    rev = "v${version}";
-    hash = "sha256-CybAsHHJp8lPUsfQjlfD2Arei7oK4DFwk2cCjUso2Ek=";
+    rev = "e55f7aaadca759af1d589a525328524b4cda1216";
+    hash = "sha256-2TScJetJ45iAIj9usfaVfy2a1OAzH0PK2max/9M3IAo=";
   };
   nativeBuildInputs = [
     pkgs.meson
