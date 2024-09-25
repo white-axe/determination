@@ -9,7 +9,7 @@
 
 --- a/build/CMakeLists.txt
 +++ b/build/CMakeLists.txt
-@@ -399,32 +399,32 @@ install (
+@@ -402,32 +402,32 @@ install (
  
  ####################################
  # install shared resources
@@ -65,7 +65,7 @@
  
  # install faust libraries
  file (GLOB FAUSTDSPLIBS ${ROOT}/libraries/*.lib ${ROOT}/libraries/old/*.lib)
-@@ -435,7 +435,7 @@ file (GLOB FAUSTARCHS ${ARCHDIR}/*.cpp ${ARCHDIR}/*.c ${ARCHDIR}/*.cs ${ARCHDIR}
+@@ -438,7 +438,7 @@ file (GLOB FAUSTARCHS ${ARCHDIR}/*.cpp ${ARCHDIR}/*.c ${ARCHDIR}/*.cs ${ARCHDIR}
  					${ARCHDIR}/*.d ${ARCHDIR}/mathdoctexts-*.txt  
  					${ARCHDIR}/latexheader.tex)
  install (
@@ -74,7 +74,7 @@
      PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
  )
  install (
-@@ -450,14 +450,14 @@ foreach (dir ${ARCHSRC})
+@@ -453,14 +453,14 @@ foreach (dir ${ARCHSRC})
  endforeach()
  set(ARCHFOLDERS ${ARCHFOLDERS} ${ARCHDIR}/httpdlib/html/js)
  
