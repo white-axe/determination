@@ -11,6 +11,7 @@ set -eEo pipefail
 export PATH="/bin:$PATH"
 export LV2_PATH="/lib/lv2:$LV2_PATH"
 export JACK_DEFAULT_SERVER='determination'
+export FAUST_OPT='FAUST_LLVM_NO_FM'
 
 help () {
   >&2 echo ''
