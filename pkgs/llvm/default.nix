@@ -6,7 +6,7 @@
 # (at your option) any later version.
 { pkgs }:
 let
-  version = "17.0.6";
+  version = "18.1.8";
 in
 pkgs.stdenv.mkDerivation {
   pname = "llvm";
@@ -15,7 +15,7 @@ pkgs.stdenv.mkDerivation {
     owner = "llvm";
     repo = "llvm-project";
     rev = "llvmorg-${version}";
-    hash = "sha256-8MEDLLhocshmxoEBRSKlJ/GzJ8nfuzQ8qn0X/vLA+ag=";
+    hash = "sha256-iiZKMRo/WxJaBXct9GdAcAT3cz9d9pnAcO1mmR6oPNE=";
   };
   nativeBuildInputs = [
     pkgs.cmake

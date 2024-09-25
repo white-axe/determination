@@ -6,7 +6,7 @@
 # (at your option) any later version.
 { pkgs }:
 let
-  version = "2.74.6";
+  version = "2.75.7";
   llvm = pkgs.callPackage ../llvm { };
   ncurses = pkgs.ncurses.override { enableStatic = true; };
 in
@@ -18,7 +18,7 @@ pkgs.stdenv.mkDerivation {
     repo = "faust";
     rev = version;
     fetchSubmodules = true;
-    hash = "sha256-0r7DjTrsNKZ5ZmWoA+Y9OXyJFUiUFZiPQb1skXXWYTw=";
+    hash = "sha256-7aBSw1afOMXDnCNykVto76VAI2WU+uTzM4guQTVnk+Y=";
   };
   patches = [ ./share.patch ];
   nativeBuildInputs = [
@@ -54,9 +54,9 @@ pkgs.stdenv.mkDerivation {
     substituteInPlace misc/llvm.cmake \
       --replace-fail ' ''${LLVM_CONFIG} --ldflags ' ' echo -L${llvm}/lib '
     substituteInPlace misc/llvm.cmake \
-      --replace-fail ' ''${LLVM_CONFIG}  --libs ' " echo $libs"
+      --replace-fail ' ''${LLVM_CONFIG} --libs --link-static ' " echo $libs"
     substituteInPlace misc/llvm.cmake \
-      --replace-fail ' ''${LLVM_CONFIG}  --system-libs ' " echo -lrt -ldl -lm -lz -ltinfo -lxml2 "
+      --replace-fail ' ''${LLVM_CONFIG} --link-static --system-libs ' " echo -lrt -ldl -lm -lz -ltinfo -lxml2 "
   '';
   cmakeBuildType = "MinSizeRel";
   cmakeFlags = [
