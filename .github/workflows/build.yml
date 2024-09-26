@@ -27,7 +27,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
       - name: Install Nix
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@v29
       - name: Build
         run: nix build -Lo container-image-determination.tar
       - name: Attest artifact
@@ -117,7 +117,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
       - name: Install Nix
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@v29
       - name: Install Tar and Zstandard from Nixpkgs
         run: |
           nix build -L '.#tar'
