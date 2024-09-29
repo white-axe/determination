@@ -1,0 +1,59 @@
+# Determination - Deterministic rendering environment for white-axe's music
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This patch makes Moony's `Entropy()` function behave deterministically.
+
+--- a/api/api.c
++++ b/api/api.c
+@@ -201,13 +201,13 @@ _lentropy(lua_State *L)
+ {
+ 	moony_t *moony = lua_touserdata(L, lua_upvalueindex(1));
+ 
+-	size_t sz;
+-	const uint32_t *val;
+-	if((val = varchunk_read_request(moony->entropy, &sz)))
++	uint32_t val; uint32_t val2;
++	random_r(&moony->determination_prng_buf, &val); random_r(&moony->determination_prng_buf, &val2);
++	if(true)
+ 	{
+-		lua_pushinteger(L, *val);
++		lua_pushinteger(L, val > 0x3fffffff ? ~val2 : val2);
+ 
+-		varchunk_read_advance(moony->entropy);
++		//varchunk_read_advance(moony->entropy);
+ 	}
+ 	else
+ 	{
+@@ -865,7 +865,7 @@ _fill_entropy(moony_t *moony)
+ 	uint32_t *val;
+ 	while((val = varchunk_write_request(moony->entropy, sizeof(uint32_t))))
+ 	{
+-		getentropy(val, sizeof(uint32_t));
++		*val = 0xdeadbeef;
+ 
+ 		//lv2_log_note(&moony->logger, "prefilling entropy %"PRIu32, *val);
+ 
+@@ -1115,7 +1115,7 @@ moony_init(moony_t *moony, const char *subject, double sample_rate,
+ 		fprintf(stderr, "varchunk_new failed\n");
+ 		return -1;
+ 	}
+-
++	moony->determination_prng_buf.state = NULL; initstate_r(1, moony->determination_prng_statebuf, 128, &moony->determination_prng_buf);
+ 	_fill_entropy(moony);
+ 
+ 	moony->mem_size = mem_size;
+--- a/include/moony.h
++++ b/include/moony.h
+@@ -281,7 +281,7 @@ struct _moony_t {
+ 
+ 	varchunk_t *from_dsp;
+ 	varchunk_t *entropy;
+-
++	struct random_data determination_prng_buf; char determination_prng_statebuf[128];
+ 	latom_driver_hash_t atom_driver_hash [DRIVER_HASH_MAX];
+ 
+ 	size_t mem_size;

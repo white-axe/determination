@@ -65,6 +65,11 @@
             pathsToLink = [ "/lib/lv2" ];
           }
           {
+            name = "moony";
+            paths = [ (pkgs.callPackage ./pkgs/moony { }) ];
+            pathsToLink = [ "/lib/lv2" ];
+          }
+          {
             name = "renderer";
             paths = [
               (pkgs.callPackage ./pkgs/determination-renderer { })

@@ -1,0 +1,212 @@
+# Determination - Deterministic rendering environment for white-axe's music
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This patch uses a condition variable to force Moony's realtime thread to wait
+# for the worker thread to finish any asynchronous operations it's performing
+# each frame.
+
+--- a/api/api.c
++++ b/api/api.c
+@@ -50,7 +50,7 @@
+ #ifndef LV2_UNITS__midiController
+ #	define LV2_UNITS__midiController LV2_UNITS_PREFIX "midiController"
+ #endif
+-
++static void determination_increment(moony_t *moony) { pthread_mutex_lock(&moony->determination_mutex); ++moony->determination_njobs; pthread_mutex_unlock(&moony->determination_mutex); } static void determination_decrement(moony_t *moony) { pthread_mutex_lock(&moony->determination_mutex); assert(moony->determination_njobs > 0); if (--moony->determination_njobs == 0) pthread_cond_broadcast(&moony->determination_cond); pthread_mutex_unlock(&moony->determination_mutex); } static void determination_wait(moony_t *moony) { pthread_mutex_lock(&moony->determination_mutex); while (moony->determination_njobs > 0) pthread_cond_wait(&moony->determination_cond, &moony->determination_mutex); pthread_mutex_unlock(&moony->determination_mutex); }
+ static const char *moony_ref [MOONY_UDATA_COUNT] = {
+ 	[MOONY_UDATA_ATOM]	= "latom",
+ 	[MOONY_UDATA_FORGE]	= "lforge",
+@@ -895,7 +895,7 @@ _work_job(moony_t *moony,
+ 		} break;
+ 		case MOONY_JOB_MEM_FREE:
+ 		{
+-			moony_vm_mem_free(job->mem.ptr, job->mem.size);
++			moony_vm_mem_free(job->mem.ptr, job->mem.size); determination_decrement(moony);
+ 		} break;
+ 		case MOONY_JOB_VM_ALLOC:
+ 		{
+@@ -905,23 +905,23 @@ _work_job(moony_t *moony,
+ 				moony_vm_t *vm_old = (moony_vm_t *)atomic_exchange_explicit(&moony->vm_new, (uintptr_t)vm_new, memory_order_relaxed);
+ 				if(vm_old)
+ 					moony_vm_free(vm_old);
+-			}
++			determination_decrement(moony); }
+ 			else
+ 			{
+-				return LV2_WORKER_ERR_UNKNOWN;
++				determination_decrement(moony); return LV2_WORKER_ERR_UNKNOWN;
+ 			}
+ 		} break;
+ 		case MOONY_JOB_VM_FREE:
+ 		{
+-			moony_vm_free(job->vm);
++			moony_vm_free(job->vm); determination_decrement(moony);
+ 		} break;
+ 		case MOONY_JOB_PTR_FREE:
+ 		{
+-			free(job->ptr);
++			free(job->ptr); determination_decrement(moony);
+ 		} break;
+ 		case MOONY_JOB_ENTROPY:
+ 		{
+-			_fill_entropy(moony);
++			_fill_entropy(moony); determination_decrement(moony);
+ 		} break;
+ 	}
+ 
+@@ -1000,7 +1000,7 @@ _work_response(LV2_Handle instance, uint32_t size, const void *body)
+ 					moony->vm->size[i] = 0;
+ 					moony->vm->area[i] = NULL;
+ 					moony->vm->pool[i] = NULL;
+-
++					determination_increment(moony);
+ 					varchunk_write_advance(moony->from_dsp, sizeof(moony_job_t));
+ 					if(moony_wake_worker(moony->sched) != LV2_WORKER_SUCCESS)
+ 						moony_trace(moony, "waking worker failed");
+@@ -1010,7 +1010,7 @@ _work_response(LV2_Handle instance, uint32_t size, const void *body)
+ 			}
+ 
+ 			moony->vm->space += moony->vm->size[i];
+-			//printf("mem extended to %zu KB\n", moony->vm->space / 1024);
++			determination_decrement(moony);
+ 		} break;
+ 
+ 		case MOONY_JOB_VM_ALLOC:
+@@ -1094,8 +1094,8 @@ extension_data(const char* uri)
+ 
+ __non_realtime int
+ moony_init(moony_t *moony, const char *subject, double sample_rate,
+-	const LV2_Feature *const *features, size_t mem_size, bool testing)
+-{
++	const LV2_Feature *const *features, size_t mem_size, bool testing) {
++	assert(!pthread_cond_init(&moony->determination_cond, NULL) && !pthread_mutex_init(&moony->determination_mutex, NULL)); moony->determination_njobs = 0;
+ 	atomic_init(&moony->state_atom_new, 0);
+ 	atomic_init(&moony->vm_new, 0);
+ 	atomic_init(&moony->err_new, 0);
+@@ -2076,7 +2076,7 @@ moony_in(moony_t *moony, const LV2_Atom_Sequence *control, LV2_Atom_Sequence *no
+ 		{
+ 			req->type = MOONY_JOB_PTR_FREE;
+ 			req->ptr = chunk_new;
+-
++			determination_increment(moony);
+ 			varchunk_write_advance(moony->from_dsp, sizeof(moony_job_t));
+ 			if(moony_wake_worker(moony->sched) != LV2_WORKER_SUCCESS)
+ 				moony_trace(moony, "waking worker failed");
+@@ -2095,7 +2095,7 @@ moony_in(moony_t *moony, const LV2_Atom_Sequence *control, LV2_Atom_Sequence *no
+ 		{
+ 			req->type = MOONY_JOB_PTR_FREE;
+ 			req->ptr = err_new;
+-
++			determination_increment(moony);
+ 			varchunk_write_advance(moony->from_dsp, sizeof(moony_job_t));
+ 			if(moony_wake_worker(moony->sched) != LV2_WORKER_SUCCESS)
+ 				moony_trace(moony, "waking worker failed");
+@@ -2115,7 +2115,7 @@ moony_in(moony_t *moony, const LV2_Atom_Sequence *control, LV2_Atom_Sequence *no
+ 			{
+ 				req->type = MOONY_JOB_PTR_FREE;
+ 				req->ptr = state_atom_old;
+-
++				determination_increment(moony);
+ 				varchunk_write_advance(moony->from_dsp, sizeof(moony_job_t));
+ 				if(moony_wake_worker(moony->sched) != LV2_WORKER_SUCCESS)
+ 					moony_trace(moony, "waking worker failed");
+@@ -2176,7 +2176,7 @@ moony_in(moony_t *moony, const LV2_Atom_Sequence *control, LV2_Atom_Sequence *no
+ 			{
+ 				req->type = MOONY_JOB_VM_FREE;
+ 				req->vm = vm_old;
+-
++				determination_increment(moony);
+ 				varchunk_write_advance(moony->from_dsp, sizeof(moony_job_t));
+ 				if(moony_wake_worker(moony->sched) != LV2_WORKER_SUCCESS)
+ 					moony_trace(moony, "waking worker failed");
+@@ -2290,7 +2290,7 @@ moony_in(moony_t *moony, const LV2_Atom_Sequence *control, LV2_Atom_Sequence *no
+ 					{
+ 						req->type = MOONY_JOB_VM_ALLOC;
+ 						memcpy(req->chunk, LV2_ATOM_BODY_CONST(value), value->size);
+-
++						determination_increment(moony);
+ 						varchunk_write_advance(moony->from_dsp, sz);
+ 						if(moony_wake_worker(moony->sched) != LV2_WORKER_SUCCESS)
+ 							moony_trace(moony, "waking worker failed");
+@@ -2319,7 +2319,7 @@ moony_in(moony_t *moony, const LV2_Atom_Sequence *control, LV2_Atom_Sequence *no
+ 
+ 	moony->notify_ref = ref;
+ 	moony->notify_snapshot = *forge; // make snapshot if script should error before moony_out
+-
++	determination_wait(moony);
+ 	return moony->once;
+ }
+ 
+@@ -2455,12 +2455,12 @@ moony_out(moony_t *moony, LV2_Atom_Sequence *notify, uint32_t frames)
+ 		if((req = varchunk_write_request(moony->from_dsp, sizeof(moony_job_t))))
+ 		{
+ 			req->type = MOONY_JOB_ENTROPY;
+-
++			determination_increment(moony);
+ 			varchunk_write_advance(moony->from_dsp, sizeof(moony_job_t));
+ 			if(moony_wake_worker(moony->sched) != LV2_WORKER_SUCCESS)
+ 				moony_trace(moony, "waking worker failed");
+ 		}
+ 	}
+-
++	determination_wait(moony);
+ 	moony->once = false;
+ }
+--- a/include/moony.h
++++ b/include/moony.h
+@@ -17,7 +17,7 @@
+ #	define mlock(...)
+ #	define munlock(...)
+ #endif
+-
++#include <pthread.h>
+ #include <lv2/lv2plug.in/ns/ext/atom/atom.h>
+ #include <lv2/lv2plug.in/ns/ext/atom/util.h>
+ #include <lv2/lv2plug.in/ns/ext/atom/forge.h>
+@@ -293,8 +293,8 @@ struct _moony_t {
+ 	char chunk [MOONY_MAX_CHUNK_LEN];
+ 	atomic_uintptr_t chunk_new;
+ 	char *chunk_nrt;
++	pthread_cond_t determination_cond; pthread_mutex_t determination_mutex; size_t determination_njobs;
+ };
+-
+ // in api.c
+ int moony_init(moony_t *moony, const char *subject, double sample_rate,
+ 	const LV2_Feature *const *features, size_t mem_size, bool testing);
+--- a/plugin/axa.c
++++ b/plugin/axa.c
+@@ -179,7 +179,7 @@ run(LV2_Handle instance, uint32_t nsamples)
+ 
+ 	moony_pre(&handle->moony, handle->notify);
+ 
+-	if(_try_lock(&handle->moony.state_lock))
++	_spin_lock(&handle->moony.state_lock); if(true)
+ 	{
+ 		// apply stash, if any
+ 		if(handle->stashed)
+--- a/plugin/caxca.c
++++ b/plugin/caxca.c
+@@ -183,7 +183,7 @@ run(LV2_Handle instance, uint32_t nsamples)
+ 
+ 	moony_pre(&handle->moony, handle->notify);
+ 
+-	if(_try_lock(&handle->moony.state_lock))
++	_spin_lock(&handle->moony.state_lock); if(true)
+ 	{
+ 		// apply stash, if any
+ 		if(handle->stashed)
+--- a/plugin/cxc.c
++++ b/plugin/cxc.c
+@@ -149,7 +149,7 @@ run(LV2_Handle instance, uint32_t nsamples)
+ 
+ 	moony_pre(&handle->moony, handle->notify);
+ 
+-	if(_try_lock(&handle->moony.state_lock))
++	_spin_lock(&handle->moony.state_lock); if(true)
+ 	{
+ 		// apply stash, if any
+ 		if(handle->stashed)
