@@ -13,7 +13,7 @@
 
 --- a/source/backend/engine/CarlaEngine.cpp
 +++ b/source/backend/engine/CarlaEngine.cpp
-@@ -3528,14 +3528,14 @@ bool CarlaEngine::loadProjectInternal(water::XmlDocument& xmlDoc, const bool alw
+@@ -3525,14 +3525,14 @@ bool CarlaEngine::loadProjectInternal(water::XmlDocument& xmlDoc, const bool alw
                          water::String externalPort = targetPort.trimCharactersAtStart("Audio Output:");
  
                          /**/ if (externalPort == "Left")

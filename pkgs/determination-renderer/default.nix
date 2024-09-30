@@ -6,7 +6,7 @@
 # (at your option) any later version.
 { pkgs }:
 let
-  version = "948991d7b5104280c03960925908e589c77b169a"; # 2024-04-21
+  version = "2f7c9394134ad8479a7c9f236123ff365fa68e99"; # 2024-09-22
   carla = pkgs.stdenv.mkDerivation {
     pname = "determination-renderer-carla";
     inherit version;
@@ -14,7 +14,7 @@ let
       owner = "falkTX";
       repo = "Carla";
       rev = version;
-      hash = "sha256-uGAuKheoMfP9hZXsw29ec+58dJM8wMuowe95QutzKBY=";
+      hash = "sha256-XlOWPsMzpzayim+rfxxzWhpm0jA0z669zukR03zIqPA=";
     };
     patches = [
       ./expose.patch
