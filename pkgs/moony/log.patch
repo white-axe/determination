@@ -1,0 +1,43 @@
+# Determination - Deterministic rendering environment for white-axe's music
+# Copyright (C) 2024 Liu Hao <whiteaxe@tuta.io>
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This patch makes Moony's log messages actually show up in the console output.
+
+--- a/api/api.c
++++ b/api/api.c
+@@ -443,14 +443,14 @@ _log(lua_State *L)
+ 
+ 	size_t len;
+ 	const char *res = lua_tolstring(L, -1, &len);
+-
+-	if(moony->log)
+-	{
+-		if(vm->nrt) // we're running in worker thread
+-			lv2_log_note(&moony->logger, "%s\n", res);
+-		else // we're running in rt-thread
+-			lv2_log_trace(&moony->logger, "%s\n", res);
+-	}
++	lv2_log_note(&moony->logger, "[moony] %s\n", res);
++	//if(moony->log)
++	//{
++	//	if(vm->nrt) // we're running in worker thread
++	//		lv2_log_note(&moony->logger, "%s\n", res);
++	//	else // we're running in rt-thread
++	//		lv2_log_trace(&moony->logger, "%s\n", res);
++	//}
+ 
+ 	// feedback to UI
+ 	if(!vm->trace_overflow)
+@@ -2313,7 +2313,7 @@ moony_in(moony_t *moony, const LV2_Atom_Sequence *control, LV2_Atom_Sequence *no
+ 			ref = lv2_atom_forge_frame_time(forge, 0);
+ 		if(ref)
+ 			ref = _moony_patch(&moony->uris.patch, forge, moony->uris.moony_error, moony->error, len);
+-
++		if (len) lv2_log_error(&moony->logger, "[moony] %s\n", moony->error);
+ 		moony->error_out = false; // reset flag
+ 	}
+ 

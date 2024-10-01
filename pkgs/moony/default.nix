@@ -18,6 +18,7 @@ pkgs.stdenv.mkDerivation {
   patches = [
     ./disable-ui.patch
     ./entropy.patch
+    ./log.patch
     ./sync.patch
   ];
   nativeBuildInputs = [
