@@ -7,12 +7,12 @@
 { pkgs }:
 pkgs.stdenv.mkDerivation {
   pname = "rubberband";
-  version = "2024-09-24";
+  version = "2024-10-03";
   src = pkgs.fetchFromGitHub {
     owner = "breakfastquay";
     repo = "rubberband";
-    rev = "e55f7aaadca759af1d589a525328524b4cda1216";
-    hash = "sha256-2TScJetJ45iAIj9usfaVfy2a1OAzH0PK2max/9M3IAo=";
+    rev = "48e08a5113ced935451833e554d39f8fca31276f";
+    hash = "sha256-XY5GqUDToULthExTEPheUkDZ41IWYxkKfudXNM7TjPw=";
   };
   nativeBuildInputs = [
     pkgs.meson
@@ -24,6 +24,7 @@ pkgs.stdenv.mkDerivation {
     pkgs.libsamplerate
     pkgs.lv2
   ];
+  mesonBuildType = "minsize";
   mesonFlags = [
     "-Dcmdline=disabled"
     "-Ddefault_library=static"
@@ -35,5 +36,4 @@ pkgs.stdenv.mkDerivation {
     "-Dtests=disabled"
     "-Dvamp=disabled"
   ];
-  mesonBuildType = "minsize";
 }
