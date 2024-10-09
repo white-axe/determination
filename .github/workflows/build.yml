@@ -126,6 +126,11 @@ jobs:
         with:
           name: closure-determination.tar.zst
           path: closure-determination.tar.zst
+      - name: Attest artifact
+        id: attest-artifact
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: closure-determination.tar.zst
       - name: Prepare release files
         run: |
           cp "${{ steps.attest-artifact.outputs.bundle-path }}" ./closure-determination.tar.zst.sigstore.json
