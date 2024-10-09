@@ -30,16 +30,16 @@ jobs:
         uses: cachix/install-nix-action@v29
       - name: Build
         run: nix build -Lo container-image-determination.tar
-      - name: Attest artifact
-        id: attest-artifact
-        uses: actions/attest-build-provenance@v1
-        with:
-          subject-path: container-image-determination.tar
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: container-image-determination.tar
           path: container-image-determination.tar
+      - name: Attest artifact
+        id: attest-artifact
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: container-image-determination.tar
       - name: Prepare release files
         run: cp "${{ steps.attest-artifact.outputs.bundle-path }}" ./container-image-determination.tar.sigstore.json
       - name: Release
