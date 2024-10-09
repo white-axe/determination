@@ -6,15 +6,15 @@
 # (at your option) any later version.
 { pkgs }:
 let
-  version = "2f7c9394134ad8479a7c9f236123ff365fa68e99"; # 2024-09-22
+  version = "2024-10-01";
   carla = pkgs.stdenv.mkDerivation {
-    pname = "determination-renderer-carla";
+    pname = "determination-renderer-carla-source";
     inherit version;
     src = pkgs.fetchFromGitHub {
       owner = "falkTX";
       repo = "Carla";
-      rev = version;
-      hash = "sha256-XlOWPsMzpzayim+rfxxzWhpm0jA0z669zukR03zIqPA=";
+      rev = "e312817b6f3d95e928dfde119934e7657092e7cc";
+      hash = "sha256-jznejvHl6+L0IHmbfSEkdk5vxWbueN9BVa+xl1NQQ4c=";
     };
     patches = [
       ./expose.patch
@@ -33,7 +33,7 @@ let
 in
 pkgs.stdenv.mkDerivation {
   pname = "determination-renderer";
-  inherit version;
+  version = "+carla-${version}";
   src = ./src;
   nativeBuildInputs = [
     pkgs.cmake
