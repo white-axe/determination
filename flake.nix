@@ -84,9 +84,10 @@
       packages.${system} = {
         default = image;
         inherit image formatter;
+        jq = pkgs.jq.bin;
         skopeo = pkgs.skopeo;
         tar = pkgs.gnutar;
-        zstd = pkgs.zstd;
+        zstd = pkgs.zstd.bin;
       };
     };
 }

@@ -43,7 +43,11 @@ This creates an uncompressed tar archive named "result" with no file extension. 
 
 If you modify the contents of this repository, keep in mind that Nix ignores untracked files in Git, so always use `git add` to add untracked files before building.
 
-By default, the image will be built using some cached binaries from Nix's binary cache. To disable the binary cache, add `--option substitute false` to the `nix` command, which will cause all source files to be fetched from their respective project websites and then build everything from source. In case any of these project websites and/or the Nix cache are suffering from link rot, each release on GitHub also comes with a closure that contains the source code of everything you need to build this image offline aside from Nix itself. Because GitHub has a file size limit for releases, some releases' closures may be distributed in parts which must be concatenated together before extracting.
+By default, the image will be built using some cached binaries from Nix's binary cache. To disable the binary cache, add `--option substitute false` to the `nix` command, which will cause all source files to be fetched from their respective project websites and then build everything from source.
+
+In case any of these project websites and/or the Nix cache are suffering from link rot, each release on GitHub also comes with a closure that contains the source code of everything you need to build this image offline aside from Nix itself. Because GitHub has a file size limit for releases, some releases' closures may be distributed in parts which must be concatenated together before extracting.
+
+The closures are also designed to be reproducible. A script, "close.sh", is provided for building closures on x86-64 Linux computers so you can verify the reproducibility of the closures.
 
 # Legal
 
