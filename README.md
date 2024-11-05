@@ -10,6 +10,7 @@ It comes with the following LV2 audio plugins, modified to behave deterministica
 
 * [Mephisto](https://git.open-music-kontrollers.ch/~hp/mephisto.lv2), an LV2 plugin that allows you to design your own synthesizers and effects in the [Faust](https://github.com/grame-cncm/faust) programming language and then runs them using LLVM just-in-time compilation.
 * [Moony](https://git.open-music-kontrollers.ch/~hp/moony.lv2), an LV2 plugin that allows you to manipulate MIDI events and plugin parameters in the Lua programming language.
+* [Rubber Band](https://hg.sr.ht/~breakfastquay/rubberband), a pitch shifter LV2 plugin.
 * [ZynAddSubFX](https://github.com/zynaddsubfx/zynaddsubfx), a software synthesizer, installed as an LV2 plugin.
 
 # Usage
