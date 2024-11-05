@@ -65,6 +65,11 @@
             pathsToLink = [ "/lib/lv2" ];
           }
           {
+            name = "rubberband";
+            paths = [ (pkgs.callPackage ./pkgs/rubberband { }) ];
+            pathsToLink = [ "/lib/lv2" ];
+          }
+          {
             name = "renderer";
             paths = [
               (pkgs.callPackage ./pkgs/determination-renderer { })

@@ -33,7 +33,7 @@ pkgs.stdenv.mkDerivation {
     pkgs.pkg-config
   ];
   buildInputs = [
-    (pkgs.callPackage ../fftw { })
+    (pkgs.callPackage ../fftw { precision = "single"; })
     pkgs.liblo
     pkgs.minixml
     pkgs.zlib
